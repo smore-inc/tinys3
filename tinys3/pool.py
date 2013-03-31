@@ -13,8 +13,8 @@ def async_handle_request(request):
 
 
 class Pool(Base):
-    def __init__(self, secret_key, access_key, default_bucket=None, size=5):
-        super(Pool, self).__init__(secret_key, access_key, default_bucket=default_bucket)
+    def __init__(self, secret_key, access_key, default_bucket=None, ssl=False, size=5):
+        super(Pool, self).__init__(secret_key, access_key, ssl=ssl, default_bucket=default_bucket)
 
         self.pool = ThreadPool(processes=size)
 
@@ -36,7 +36,6 @@ class Pool(Base):
 
     def all_completed(self, async_responses, timeout=None):
         return AsyncResponse.all_completed(async_responses, timeout)
-
 
     def __enter__(self):
         return self

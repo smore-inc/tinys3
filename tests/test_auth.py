@@ -1,6 +1,6 @@
+# -*- coding: utf-8 -*-
 import unittest
-from nose.tools import *
-from tinyS3.auth import S3Auth
+from tinys3.auth import S3Auth
 
 from requests import Request
 
