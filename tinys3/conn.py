@@ -1,5 +1,5 @@
-from .auth import S3Auth
-import request_factory
+from auth import S3Auth
+from request_factory import RequestFactory
 import requests
 
 
@@ -30,14 +30,14 @@ class Base(object):
         :param headers:
         :return:
         """
-        r = request_factory.upload(key, local_file,
-                                   bucket=bucket or self.default_bucket,
-                                   auth=self.auth,
-                                   expires=expires,
-                                   content_type=content_type,
-                                   public=public,
-                                   extra_headers=headers,
-                                   ssl=self.ssl)
+        r = RequestFactory.upload_request(key, local_file,
+                                          bucket=bucket or self.default_bucket,
+                                          auth=self.auth,
+                                          expires=expires,
+                                          content_type=content_type,
+                                          public=public,
+                                          extra_headers=headers,
+                                          ssl=self.ssl)
 
         return self.run(r)
 
@@ -52,10 +52,12 @@ class Base(object):
         :param public:
         :return:
         """
-        to_bucket = to_bucket or self.default_bucket or from_bucket
+        to_bucket = to_bucket or from_bucket or self.default_bucket
 
-        r = request_factory.copy_request(from_key, from_bucket,
-                                         to_key, to_bucket, metadata, public, auth=self.auth, ssl=self.ssl)
+        r = RequestFactory.copy_request(from_key, from_bucket,
+                                        to_key, to_bucket, metadata, public,
+                                        auth=self.auth,
+                                        ssl=self.ssl)
 
         return self.run(r)
 
@@ -70,7 +72,7 @@ class Base(object):
         """
         bucket = bucket or self.default_bucket
 
-        r = request_factory.update_metadata_request(key, metadata, bucket, public=public, auth=self.auth, ssl=self.ssl)
+        r = RequestFactory.update_metadata_request(key, metadata, bucket, public=public, auth=self.auth, ssl=self.ssl)
 
         return self.run(r)
 
@@ -82,7 +84,7 @@ class Base(object):
         :return:
         """
         bucket = bucket or self.default_bucket
-        r = request_factory.delete_request(key, bucket, auth=self.auth, ssl=self.ssl)
+        r = RequestFactory.delete_request(key, bucket, auth=self.auth, ssl=self.ssl)
         return self.run(r)
 
     def list(self, bucket=None, marker=None, prefix=None, page_size=1000):

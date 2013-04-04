@@ -28,8 +28,7 @@ class S3Auth(AuthBase):
     def _sign(self, message):
         return hmac.new(self.secret_key,
                         msg=message,
-                        digestmod=hashlib.sha1).digest().encode('base64').replace('\n',
-                                                                                  '')
+                        digestmod=hashlib.sha1).digest().encode('base64').replace('\n', '')
 
     def _get_message(self, request):
         h = CaseInsensitiveDict()

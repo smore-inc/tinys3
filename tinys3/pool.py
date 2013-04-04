@@ -1,7 +1,7 @@
 from datetime import time
 from multiprocessing import TimeoutError
 import threading
-from .conn import Base
+from conn import Base
 from multiprocessing.pool import ThreadPool
 from requests import Session
 from Queue import Queue

@@ -2,7 +2,7 @@
 from datetime import timedelta
 import mimetypes
 import unittest
-import tinys3.request_factory as request_factory
+from tinys3.request_factory import RequestFactory
 
 TEST_AUTH = ("TEST_SECRET_KEY", "TEST_ACCESS_KEY")
 
@@ -14,19 +14,19 @@ class TestRequestFactory(unittest.TestCase):
         """
 
         # Test the simplest url
-        url = request_factory.bucket_url('test_key', 'test_bucket')
+        url = RequestFactory.bucket_url('test_key', 'test_bucket')
         self.assertEqual(url, 'http://s3.amazonaws.com/test_bucket/test_key', 'Simple url')
 
         # Simple with ssl
-        url = request_factory.bucket_url('test_key', 'test_bucket', ssl=True)
+        url = RequestFactory.bucket_url('test_key', 'test_bucket', ssl=True)
         self.assertEqual(url, 'https://s3.amazonaws.com/test_bucket/test_key', 'Simple url with SSL')
 
         # Key with / prefix
-        url = request_factory.bucket_url('/test_key', 'test_bucket')
+        url = RequestFactory.bucket_url('/test_key', 'test_bucket')
         self.assertEqual(url, 'http://s3.amazonaws.com/test_bucket/test_key', 'Key with / prefix')
 
         # Nested key
-        url = request_factory.bucket_url('folder/for/key/test_key', 'test_bucket')
+        url = RequestFactory.bucket_url('folder/for/key/test_key', 'test_bucket')
         self.assertEqual(url, 'http://s3.amazonaws.com/test_bucket/folder/for/key/test_key', 'Nested key')
 
     def test_delete_request(self):
@@ -34,7 +34,7 @@ class TestRequestFactory(unittest.TestCase):
         Test the generation of a delete request
         """
 
-        r = request_factory.delete_request('key_to_delete', 'bucket', TEST_AUTH, ssl=True)
+        r = RequestFactory.delete_request('key_to_delete', 'bucket', TEST_AUTH, ssl=True)
 
         self.assertEquals(r.auth, TEST_AUTH)
         self.assertEquals(r.method, 'DELETE')
@@ -44,8 +44,8 @@ class TestRequestFactory(unittest.TestCase):
         """
         Test the generation of an update metadata request
         """
-        r = request_factory.update_metadata_request('key_to_update', {'example-meta-key': 'example-meta-value'},
-                                                    'bucket', True, TEST_AUTH, ssl=True)
+        r = RequestFactory.update_metadata_request('key_to_update', {'example-meta-key': 'example-meta-value'},
+                                                   'bucket', True, TEST_AUTH, ssl=True)
 
         self.assertEquals(r.auth, TEST_AUTH)
         self.assertEquals(r.method, 'PUT')
@@ -67,8 +67,8 @@ class TestRequestFactory(unittest.TestCase):
         Test the generation of a copy request
         """
 
-        r = request_factory.copy_request('from_key', 'from_bucket', 'to_key', 'to_bucket', None, False, TEST_AUTH,
-                                         ssl=True)
+        r = RequestFactory.copy_request('from_key', 'from_bucket', 'to_key', 'to_bucket', None, False, TEST_AUTH,
+                                        ssl=True)
 
         self.assertEquals(r.auth, TEST_AUTH)
         self.assertEquals(r.method, 'PUT')
@@ -86,8 +86,8 @@ class TestRequestFactory(unittest.TestCase):
         """
         Test the simplest case of upload
         """
-        r = request_factory.upload_request('upload_key', 'DUMMY_DATA', TEST_AUTH, 'bucket',
-                                           ssl=True)
+        r = RequestFactory.upload_request('upload_key', 'DUMMY_DATA', TEST_AUTH, 'bucket',
+                                          ssl=True)
 
         self.assertEquals(r.auth, TEST_AUTH)
         self.assertEquals(r.method, 'PUT')
@@ -108,12 +108,12 @@ class TestRequestFactory(unittest.TestCase):
         # it was tested on the 'test_simple_upload' test
 
         # Test content type guessing
-        r = request_factory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket')
+        r = RequestFactory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket')
         self.assertEquals(r.headers['Content-Type'], 'application/zip')
 
         # Test explicit content type
-        r = request_factory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
-                                           content_type='candy/smore')
+        r = RequestFactory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
+                                          content_type='candy/smore')
 
         self.assertEquals(r.headers['Content-Type'], 'candy/smore')
 
@@ -123,20 +123,20 @@ class TestRequestFactory(unittest.TestCase):
         """
 
         # Test max expiry headers
-        r = request_factory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
-                                           expires='max')
+        r = RequestFactory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
+                                          expires='max')
 
         self.assertEquals(r.headers['Cache-Control'], 'max-age=31536000, public')
 
         # Test number expiry
-        r = request_factory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
-                                           expires=1337)
+        r = RequestFactory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
+                                          expires=1337)
 
         self.assertEquals(r.headers['Cache-Control'], 'max-age=1337, public')
 
         # Test timedelta expiry
-        r = request_factory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
-                                           expires=timedelta(weeks=2))
+        r = RequestFactory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
+                                          expires=timedelta(weeks=2))
 
         self.assertEquals(r.headers['Cache-Control'], 'max-age=1209600, public')
 
@@ -145,7 +145,7 @@ class TestRequestFactory(unittest.TestCase):
         Test providing extra headers to the upload request
         """
 
-        r = request_factory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
-                                           extra_headers={'example-meta-key': 'example-meta-value'})
+        r = RequestFactory.upload_request('test_zip_key.zip', 'DUMMY_DATA', TEST_AUTH, 'bucket',
+                                          extra_headers={'example-meta-key': 'example-meta-value'})
 
         self.assertEquals(r.headers['example-meta-key'], 'example-meta-value')
