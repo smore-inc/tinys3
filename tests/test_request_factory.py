@@ -80,7 +80,7 @@ class TestRequestFactory(unittest.TestCase):
         self.assertEquals(r.headers['x-amz-metadata-directive'], 'COPY')
 
         # Public was set to false, x-amz-acl should not be in the headers
-        self.assertNotIn('x-amz-acl', r.headers)
+        self.assertTrue('x-amz-acl' not in r.headers)
 
     def test_simple_upload(self):
         """
