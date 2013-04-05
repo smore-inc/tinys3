@@ -1,0 +1,6 @@
+# Test runner/testing utils
+nose
+# Mocking library
+flexmock
+# Requests
+requests >= 1.1.0
