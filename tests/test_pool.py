@@ -21,8 +21,8 @@ class TestPool(unittest.TestCase):
 
         self.assertEquals(pool.ssl, True)
         self.assertEquals(pool.default_bucket, 'bucket')
-        self.assertIsInstance(pool.auth, S3Auth)
-        self.assertIsInstance(pool.pool, ThreadPool)
+        self.assertTrue(isinstance(pool.auth, S3Auth))
+        self.assertTrue(isinstance(pool.pool, ThreadPool))
 
         # Assert default pool size
         self.assertEquals(pool.pool._processes, 5)

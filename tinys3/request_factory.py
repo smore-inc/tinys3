@@ -17,6 +17,7 @@ from requests import Request
 # http://grokbase.com/t/python/python-list/129tb1ygws/mimetypes-guess-type-broken-in-windows-on-py2-7-and-python-3-x
 mimetypes.init([])
 
+
 class RequestFactory(object):
     """
 
@@ -53,7 +54,7 @@ class RequestFactory(object):
             headers['x-amz-acl'] = 'public-read'
 
         if expires:
-            headers['Cache-Control'] = "max-age=%d" % expires.total_seconds() + ', public' if public else ''
+            headers['Cache-Control'] = "max-age=%d" % cls.get_total_seconds(expires) + ', public' if public else ''
 
         # update headers with the extras
         if extra_headers:
@@ -94,3 +95,10 @@ class RequestFactory(object):
     @classmethod
     def list_request(cls, bucket=None, marker=None, prefix=None, page_size=1000):
         pass
+
+    @classmethod
+    def get_total_seconds(cls, timedelta):
+        """
+        Support for gettting the total seconds from a time delta (Required for python 2.6 support)
+        """
+        return timedelta.days * 24 * 60 * 60 + timedelta.seconds

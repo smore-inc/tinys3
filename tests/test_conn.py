@@ -19,7 +19,7 @@ class TestConn(unittest.TestCase):
         Test the creation of a connection
         """
 
-        self.assertIsInstance(self.conn.auth, S3Auth)
+        self.assertTrue(isinstance(self.conn.auth, S3Auth))
         self.assertEquals(self.conn.default_bucket, TEST_BUCKET)
         self.assertEquals(self.conn.ssl, True)
 
