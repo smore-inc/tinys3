@@ -13,10 +13,13 @@ from datetime import timedelta
 import mimetypes
 from requests import Request
 
+# A fix for windows pc issues with mimetypes
+# http://grokbase.com/t/python/python-list/129tb1ygws/mimetypes-guess-type-broken-in-windows-on-py2-7-and-python-3-x
+mimetypes.init([])
 
 class RequestFactory(object):
     """
-    
+
     """
 
     @classmethod

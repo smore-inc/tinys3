@@ -1,7 +1,7 @@
 from multiprocessing import TimeoutError
 from multiprocessing.pool import ThreadPool
 import threading
-import unittest
+import unittest2
 from flexmock import flexmock
 from nose.tools import raises
 import time
@@ -10,7 +10,7 @@ from tinys3.pool import Pool, AsyncResponse
 from .test_conn import TEST_SECRET_KEY, TEST_ACCESS_KEY
 
 
-class TestPool(unittest.TestCase):
+class TestPool(unittest2.TestCase):
     def test_pool_creation(self):
         """
         Test creating a pool
@@ -64,7 +64,7 @@ class TestPool(unittest.TestCase):
 TEST_RESPONSE = "TEST_RESPONSE"
 
 
-class TestAsyncResponse(unittest.TestCase):
+class TestAsyncResponse(unittest2.TestCase):
     def test_create_and_resolve(self):
         """
         The most basic test for getting and setting results

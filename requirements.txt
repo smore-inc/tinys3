@@ -4,3 +4,6 @@ nose
 flexmock
 # Requests
 requests >= 1.1.0
+
+# Unittest2 for python 2.6 testing
+unittest2

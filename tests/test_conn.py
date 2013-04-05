@@ -1,4 +1,4 @@
-import unittest
+import unittest2
 from tinys3 import Conn
 from tinys3.auth import S3Auth
 from tinys3.request_factory import RequestFactory
@@ -10,7 +10,7 @@ TEST_BUCKET = 'bucket'
 TEST_DATA = 'test test test' * 2
 
 
-class TestConn(unittest.TestCase):
+class TestConn(unittest2.TestCase):
     def setUp(self):
         self.conn = Conn(TEST_SECRET_KEY, TEST_ACCESS_KEY, default_bucket=TEST_BUCKET, ssl=True)
 

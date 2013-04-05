@@ -94,7 +94,7 @@ class TestRequestFactory(unittest.TestCase):
         self.assertEquals(r.url, 'https://s3.amazonaws.com/bucket/upload_key')
 
         # verify content type
-        self.assertEquals(r.headers['Content-Type'], mimetypes.guess_type('upload_key')[0])
+        self.assertEquals(r.headers['Content-Type'], 'application/octet-stream')
 
         # verify public header
         self.assertEquals(r.headers['x-amz-acl'], 'public-read')
