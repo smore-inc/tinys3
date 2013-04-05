@@ -1,5 +1,5 @@
 from .auth import S3Auth
-from request_factory import RequestFactory
+from .request_factory import RequestFactory
 import requests
 
 

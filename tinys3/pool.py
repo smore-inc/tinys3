@@ -4,7 +4,12 @@ import threading
 from .conn import Base
 from multiprocessing.pool import ThreadPool
 from requests import Session
-from Queue import Queue
+
+# Support for python 2/3
+try:
+    from Queue import Queue
+except ImportError:
+    from queue import Queue
 
 
 def async_handle_request(request):

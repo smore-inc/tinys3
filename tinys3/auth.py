@@ -3,8 +3,14 @@ from requests.structures import CaseInsensitiveDict
 from datetime import datetime
 import hashlib
 import hmac
-import urlparse
+
 import re
+
+# Python 2/3 support
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 BUCKET_VHOST_MATCH = re.compile(r'^([a-z0-9\-]+\.)?s3\.amazonaws\.com$', flags=re.IGNORECASE)
 
@@ -71,7 +77,7 @@ class S3Auth(AuthBase):
         r = ""
 
         # parse our url
-        parts = urlparse.urlparse(request.url)
+        parts = urlparse(request.url)
 
         # get the host, remove any port identifiers
         host = parts.netloc.split(':')[0]
