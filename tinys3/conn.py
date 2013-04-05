@@ -1,4 +1,4 @@
-from auth import S3Auth
+from .auth import S3Auth
 from request_factory import RequestFactory
 import requests
 

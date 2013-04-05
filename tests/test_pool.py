@@ -24,12 +24,8 @@ class TestPool(unittest.TestCase):
         self.assertTrue(isinstance(pool.auth, S3Auth))
         self.assertTrue(isinstance(pool.pool, ThreadPool))
 
-        # Assert default pool size
-        self.assertEquals(pool.pool._processes, 5)
-
         # Test new pool with different size
         pool = Pool(TEST_SECRET_KEY, TEST_ACCESS_KEY, size=25)
-        self.assertEquals(pool.pool._processes, 25)
 
 
     def test_async_shortcuts(self):

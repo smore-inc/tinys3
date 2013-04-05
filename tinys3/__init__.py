@@ -1,5 +1,5 @@
-from conn import Conn
-from pool import Pool
+from .conn import Conn
+from .pool import Pool
 
 
 __title__ = 'tinys3'
