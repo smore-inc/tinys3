@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import unittest
 from tinys3 import Conn
 from tinys3.auth import S3Auth

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from multiprocessing import TimeoutError
 from multiprocessing.pool import ThreadPool
 import threading

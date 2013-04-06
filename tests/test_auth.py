@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import, unicode_literals
+
 import unittest
+from flexmock import flexmock
 from tinys3.auth import S3Auth
 
 from requests import Request
@@ -65,41 +68,81 @@ class TestS3Auth(unittest.TestCase):
         self.assertEquals(mock_request.headers['Authorization'],
                           'AWS AKIAIOSFODNN7EXAMPLE:c2WLPFtWHVgbEmeEG93a4cG37dM=')
 
+    def test_x_amz_date(self):
+        mock_request = Request(method='DELETE',
+                               url="http://s3.amazonaws.com/johnsmith/photos/puppy.jpg",
+                               headers={'Date': 'Tue, 27 Mar 2007 21:20:27 +0000',
+                                        'x-amz-date': 'Tue, 27 Mar 2007 21:20:26 +0000'})
+
+        target = """
+DELETE
+
+
+
+x-amz-date:Tue, 27 Mar 2007 21:20:26 +0000
+/johnsmith/photos/puppy.jpg
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+
     def test_delete(self):
-        #mock_request = Request(method='DELETE',
-        #                       url="http://s3.amazonaws.com/johnsmith/photos/puppy.jpg",
-        #                       headers={'Date': 'Tue, 27 Mar 2007 21:20:27 +0000',
-        #                                'x-amz-date': 'Tue, 27 Mar 2007 21:20:26 +0000'})
+        mock_request = Request(method='DELETE',
+                               url="http://s3.amazonaws.com/johnsmith/photos/puppy.jpg",
+                               headers={'Date': 'Tue, 27 Mar 2007 21:20:26 +0000'})
+
+        target = """
+DELETE
+
+
+Tue, 27 Mar 2007 21:20:26 +0000
+/johnsmith/photos/puppy.jpg
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
 
         # Call auth
-        #self.auth(mock_request)
+        self.auth(mock_request)
 
         # test authorization code
-        #self.assertEquals(mock_request.headers['Authorization'],
-        #                  'AWS AKIAIOSFODNN7EXAMPLE:9b2sXq0KfxsxHtdZkzx/9Ngqyh8=')
-        pass
+        self.assertEquals(mock_request.headers['Authorization'],
+                          'AWS AKIAIOSFODNN7EXAMPLE:lx3byBScXR6KzyMaifNkardMwNk=')
+
 
     def test_upload(self):
-        # mock_request = Request(method='PUT',
-        #                        url="http://static.johnsmith.net:8080/db-backup.dat.gz",
-        #                        headers={'Date': 'Tue, 27 Mar 2007 21:06:08 +0000',
-        #                                 'x-amz-acl': 'public-read',
-        #                                 'content-type': 'application/x-download',
-        #                                 'Content-MD5': '4gJE4saaMU4BqNR0kLY+lw==',
-        #                                 'X-Amz-Meta-ReviewedBy': 'joe@johnsmith.net,jane@jhonsmith.net',
-        #                                 'X-Amz-Meta-FileChecksum': '0x02661779',
-        #                                 'X-Amz-Meta-ChecksumAlgorithm': 'crc32',
-        #                                 'Content-Disposition': 'attachment; filename=database.dat',
-        #                                 'Content-Encoding': 'gzip',
-        #                                 'Content-Length': '5913339'})
-        #
-        # # Call auth
-        # self.auth(mock_request)
-        #
-        # # test authorization code
-        # self.assertEquals(mock_request.headers['Authorization'],
-        #                   'AWS AKIAIOSFODNN7EXAMPLE:ilyl83RwaSoYIEdixDQcA4OnAnc=')
-        pass
+        mock_request = Request(method='PUT',
+                               url="http://static.johnsmith.net:8080/db-backup.dat.gz",
+                               headers={'Date': 'Tue, 27 Mar 2007 21:06:08 +0000',
+                                        'x-amz-acl': 'public-read',
+                                        'content-type': 'application/x-download',
+                                        'Content-MD5': '4gJE4saaMU4BqNR0kLY+lw==',
+                                        'X-Amz-Meta-ReviewedBy': 'joe@johnsmith.net,jane@johnsmith.net',
+                                        'X-Amz-Meta-FileChecksum': '0x02661779',
+                                        'X-Amz-Meta-ChecksumAlgorithm': 'crc32',
+                                        'Content-Disposition': 'attachment; filename=database.dat',
+                                        'Content-Encoding': 'gzip',
+                                        'Content-Length': '5913339'})
+
+        target = """
+PUT
+4gJE4saaMU4BqNR0kLY+lw==
+application/x-download
+Tue, 27 Mar 2007 21:06:08 +0000
+x-amz-acl:public-read
+x-amz-meta-checksumalgorithm:crc32
+x-amz-meta-filechecksum:0x02661779
+x-amz-meta-reviewedby:joe@johnsmith.net,jane@johnsmith.net
+/static.johnsmith.net/db-backup.dat.gz
+        """.strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+        # Call auth
+        self.auth(mock_request)
+
+        # test authorization code
+        self.assertEquals(mock_request.headers['Authorization'],
+                          'AWS AKIAIOSFODNN7EXAMPLE:ilyl83RwaSoYIEdixDQcA4OnAnc=')
 
     def test_list_all_buckets(self):
         mock_request = Request(method='GET',
@@ -124,3 +167,231 @@ class TestS3Auth(unittest.TestCase):
         # test authorization code
         self.assertEquals(mock_request.headers['Authorization'],
                           'AWS AKIAIOSFODNN7EXAMPLE:DNEZGsoieTZ92F3bUfSPQcbGmlM=')
+
+    def test_simple_signature(self):
+        self.auth = S3Auth('secret', 'AKID')
+        mock_request = Request(method='POST', url='/', headers={'Date': 'DATE-STRING'})
+
+        flexmock(self.auth).should_receive('string_to_sign').and_return('string-to-sign')
+
+        self.auth(mock_request)
+
+        self.assertEquals(mock_request.headers['Authorization'], 'AWS AKID:Gg5WLabTOvH0WMd15wv7lWe4zK0=')
+
+
+    def test_string_to_sign(self):
+        mock_request = Request(method='POST', url='/', headers={'Date': 'DATE-STRING'})
+
+        target = """
+POST
+
+
+DATE-STRING
+/
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    def test_sts_includes_content_md5_and_content_type(self):
+        mock_request = Request(method='POST', url='/',
+                               headers={'Date': 'DATE-STRING',
+                                        'Content-Type': 'CONTENT-TYPE',
+                                        'Content-MD5': 'CONTENT-MD5'})
+
+        target = """
+POST
+CONTENT-MD5
+CONTENT-TYPE
+DATE-STRING
+/
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    def test_sts_includes_the_http_method(self):
+        mock_request = Request(method='VERB', url='/',
+                               headers={'Date': 'DATE-STRING'})
+
+        target = """
+VERB
+
+
+DATE-STRING
+/
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+
+    def test_sts_includes_any_x_amz_headers_but_not_others(self):
+        mock_request = Request(method='POST', url='/',
+                               headers={'Date': 'DATE-STRING',
+                                        'X-Amz-Abc': 'abc',
+                                        'X-Amz-Xyz': 'xyz',
+                                        'random-header': 'random'})
+
+        target = """
+POST
+
+
+DATE-STRING
+x-amz-abc:abc
+x-amz-xyz:xyz
+/
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+
+    def test_sts_includes_x_amz_headers_that_are_lower_cased(self):
+        mock_request = Request(method='POST', url='/',
+                               headers={'Date': 'DATE-STRING',
+                                        'x-amz-Abc': 'abc',
+                                        'x-amz-Xyz': 'xyz',
+                                        'random-header': 'random'})
+
+        target = """
+POST
+
+
+DATE-STRING
+x-amz-abc:abc
+x-amz-xyz:xyz
+/
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    def test_sts_sorts_headers_by_their_name(self):
+        mock_request = Request(method='POST', url='/',
+                               headers={'Date': 'DATE-STRING',
+                                        'x-amz-Abc': 'abc',
+                                        'x-amz-Xyz': 'xyz',
+                                        'x-amz-mno': 'mno',
+                                        'random-header': 'random'})
+
+        target = """
+POST
+
+
+DATE-STRING
+x-amz-abc:abc
+x-amz-mno:mno
+x-amz-xyz:xyz
+/
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    def test_sts_builds_a_canonical_resource_from_the_path(self):
+        mock_request = Request(method='POST', url='/bucket_name/key',
+                               headers={'Date': 'DATE-STRING'})
+
+        target = """
+POST
+
+
+DATE-STRING
+/bucket_name/key
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    def test_sts_appends_the_bucket_to_the_path_when_it_is_part_of_the_hostname(self):
+        mock_request = Request(method='POST', url='http://bucket-name.s3.amazonaws.com/',
+                               headers={'Date': 'DATE-STRING'})
+
+        target = """
+POST
+
+
+DATE-STRING
+/bucket-name/
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    def test_sts_appends_the_subresource_portion_of_the_path_querystring(self):
+        mock_request = Request(method='POST', url='http://bucket-name.s3.amazonaws.com/?acl',
+                               headers={'Date': 'DATE-STRING'})
+
+        target = """
+POST
+
+
+DATE-STRING
+/bucket-name/?acl
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+
+    def test_sts_includes_sub_resource_value_when_present(self):
+        mock_request = Request(method='POST', url='/bucket_name/key?versionId=123',
+                               headers={'Date': 'DATE-STRING'})
+
+        target = """
+POST
+
+
+DATE-STRING
+/bucket_name/key?versionId=123
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    def test_sts_omits_non_sub_resource_querystring_params_from_the_resource_string(self):
+        mock_request = Request(method='POST', url='/?versionId=abc&next-marker=xyz',
+                               headers={'Date': 'DATE-STRING'})
+
+        target = """
+POST
+
+
+DATE-STRING
+/?versionId=abc
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+#
+#     def test_sts_sorts_sub_resources_by_name(self):
+#         mock_request = Request(method='POST', url='/?logging&acl&website&torrent=123',
+#                                headers={'Date': 'DATE-STRING'})
+#
+#         target = """
+# POST
+#
+#
+# DATE-STRING
+# /?acl&logging&torrent=123&website
+# """.strip()
+#
+#         self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    def test_sts_includes_the_un_decoded_query_string_param_for_sub_resources(self):
+        mock_request = Request(method='POST', url='/?versionId=a%2Bb',
+                               headers={'Date': 'DATE-STRING'})
+
+        target = """
+POST
+
+
+DATE-STRING
+/?versionId=a%2Bb
+""".strip()
+
+        self.assertEquals(self.auth.string_to_sign(mock_request), target)
+#
+#     def test_sts_includes_the_non_encoded_query_string_get_header_overrides(self):
+#         mock_request = Request(method='POST', url='/?response-content-type=a%2Bb',
+#                                headers={'Date': 'DATE-STRING'})
+#
+#         target = """
+# POST
+#
+#
+# DATE-STRING
+# /?response-content-type=a+b
+# """.strip()
+#
+#         self.assertEquals(self.auth.string_to_sign(mock_request), target)

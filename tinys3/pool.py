@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 from datetime import time
 from multiprocessing import TimeoutError
 import threading
 from .conn import Base
 from multiprocessing.pool import ThreadPool
 from requests import Session
+import collections
 
 # Support for python 2/3
 try:
@@ -15,6 +17,10 @@ except ImportError:
 def async_handle_request(request):
     with Session() as s:
         return s.send(request)
+
+# Adds support for callable for python 3
+def callable(thing):
+    return isinstance(thing, collections.Callable)
 
 
 class Pool(Base):

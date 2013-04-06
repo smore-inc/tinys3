@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .conn import Conn
 from .pool import Pool
 

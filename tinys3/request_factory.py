@@ -9,6 +9,7 @@ Generates Request objects for various S3 requests
 
 """
 
+
 from datetime import timedelta
 import mimetypes
 from requests import Request
@@ -99,6 +100,6 @@ class RequestFactory(object):
     @classmethod
     def get_total_seconds(cls, timedelta):
         """
-        Support for gettting the total seconds from a time delta (Required for python 2.6 support)
+        Support for getting the total seconds from a time delta (Required for python 2.6 support)
         """
         return timedelta.days * 24 * 60 * 60 + timedelta.seconds

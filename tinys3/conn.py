@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .auth import S3Auth
 from .request_factory import RequestFactory
 import requests
