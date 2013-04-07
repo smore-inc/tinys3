@@ -196,6 +196,8 @@ class AsyncResponse(object):
             yield queue.get(timeout=timeout)
             pending -= 1
 
+    def __repr__(self):
+        return "<AsyncResponse completed=%s>" % self._completed
 
 class TimeoutQueue(Queue):
     """
