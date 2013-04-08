@@ -23,5 +23,5 @@ setup(name='tinys3',
       keywords=('s3', 'upload', 'workerpool'),
 
       package_dir={'': '.'},
-      requires=['requests (>= 1.1.0)', 'nose', 'flexmock']
+      requires=['requests (>= 1.2.0)', 'nose', 'flexmock']
 )
