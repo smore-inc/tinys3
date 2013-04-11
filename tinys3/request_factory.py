@@ -18,6 +18,7 @@ import requests
 # http://grokbase.com/t/python/python-list/129tb1ygws/mimetypes-guess-type-broken-in-windows-on-py2-7-and-python-3-x
 from .util import LenWrapperStream
 
+# Fix mimetypes on windows
 mimetypes.init([])
 
 
@@ -33,6 +34,13 @@ class S3Request(object):
 
     def run(self):
         raise NotImplementedError()
+
+    def adapter(self):
+        """
+        Returns the adapter to use when issuing a request.
+        useful for testing
+        """
+        return requests
 
 
 class UploadRequest(S3Request):
@@ -80,14 +88,8 @@ class UploadRequest(S3Request):
         if self.public:
             headers['x-amz-acl'] = 'public-read'
 
-        # if content is string, use it to open a fp
-        if isinstance(self.fp, basestring):
-            self.fp = open(self.fp, 'rb')
-            # make sure we close the fp when we finish
-            self.close = True
-
         # if rewind - rewind the fp like object
-        if self.rewind:
+        if self.rewind and hasattr(self.fp, 'seek'):
             self.fp.seek(0, os.SEEK_SET)
 
         # update headers with extra headers
@@ -108,14 +110,14 @@ class UploadRequest(S3Request):
             data = LenWrapperStream(self.fp)
 
             # call requests with all the params
-            r = requests.put(self.bucket_url(self.key, self.bucket),
-                             data=data,
-                             headers=headers,
-                             auth=self.auth)
+            r = self.adapter().put(self.bucket_url(self.key, self.bucket),
+                                   data=data,
+                                   headers=headers,
+                                   auth=self.auth)
 
         finally:
             # if close is set, try to close the fp like object (also, use finally to ensure the close)
-            if self.close:
+            if self.close and hasattr(self.fp, 'close'):
                 self.fp.close()
 
         return r
@@ -148,7 +150,7 @@ class DeleteRequest(S3Request):
 
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
-        return requests.delete(url, auth=self.auth)
+        return self.adapter().delete(url, auth=self.auth)
 
 
 class CopyRequest(S3Request):
@@ -174,7 +176,7 @@ class CopyRequest(S3Request):
         if self.metadata:
             headers.update(self.metadata)
 
-        return requests.put(self.bucket_url(self.to_key, self.to_bucket), auth=self.auth, headers=headers)
+        return self.adapter().put(self.bucket_url(self.to_key, self.to_bucket), auth=self.auth, headers=headers)
 
 
 class UpdateMetadataRequest(CopyRequest):

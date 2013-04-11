@@ -45,3 +45,17 @@ class LenWrapperStream(object):
         o.seek(spos)
         return size
 
+    def __eq__(self, other):
+        if self.stream == other:
+            return True
+
+        if isinstance(other, LenWrapperStream) and other.stream == self.stream:
+            return True
+
+    @property
+    def closed(self):
+        return self.stream.closed
+
+
+    def __repr__(self):
+        return repr(self.stream)
