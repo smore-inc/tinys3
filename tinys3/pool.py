@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import time
+import time
 from multiprocessing import TimeoutError
 import threading
 from .conn import Base
@@ -14,7 +14,12 @@ except ImportError:
 
 
 def async_handle_request(request):
-    return request.run()
+    try:
+        result = request.run()
+    except Exception as e:
+        result = e
+
+    return result
 
 # Adds support for callable for python 3
 def callable(thing):
@@ -64,6 +69,7 @@ class AsyncResponse(object):
     def __init__(self, callback=None):
         self._response = None
         self._completed = False
+        self.is_exception = False
 
         # Our lock condition
         self._cond = threading.Condition(threading.Lock())
@@ -88,6 +94,9 @@ class AsyncResponse(object):
 
         # Store the value
         self._response = value
+
+        if isinstance(value, Exception):
+            self.is_exception = True
 
         self._cond.acquire()
         try:
@@ -136,6 +145,10 @@ class AsyncResponse(object):
         self.wait(timeout)
         if not self._completed:
             raise TimeoutError
+
+        # If our response is an exception, raise it
+        if self.is_exception:
+            raise self._response
 
         return self._response
 
@@ -191,7 +204,14 @@ class AsyncResponse(object):
             r.add_callback(lambda response: queue.put(response))
 
         while pending > 0:
-            yield queue.get(timeout=timeout)
+            r = queue.get(timeout=timeout)
+
+            # Handle the case of an exception
+            if isinstance(r, Exception):
+                raise r
+
+            yield r
+
             pending -= 1
 
     def __repr__(self):
@@ -212,9 +232,9 @@ class TimeoutQueue(Queue):
             elif timeout < 0:
                 raise ValueError("'timeout' must be a positive number")
             else:
-                endtime = time() + timeout
+                endtime = int(time.time()) + timeout
                 while self.unfinished_tasks:
-                    remaining = endtime - time()
+                    remaining = endtime - int(time.time())
                     if remaining <= 0.0:
                         raise TimeoutError
                     self.all_tasks_done.wait(remaining)

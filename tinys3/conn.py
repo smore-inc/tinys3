@@ -27,7 +27,7 @@ class Base(object):
 
     def upload(self, key, local_file,
                bucket=None, expires=None, content_type=None,
-               public=True, headers=None, rewind=False, close=False):
+               public=True, headers=None, rewind=True, close=False):
         """
 
         :param key:

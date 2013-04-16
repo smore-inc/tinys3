@@ -230,3 +230,49 @@ class TestAsyncResponse(unittest.TestCase):
 
         for i in results:
             self.assertEquals(i, TEST_RESPONSE)
+
+
+    @raises(TimeoutError)
+    def test_all_completed_with_timeout(self):
+        """
+        Test the 'all_completed' class method
+        """
+        responses = []
+
+        for i in range(10):
+            responses.append(AsyncResponse())
+
+        # Create a method that will be executed on a different thread
+        # And resolve each async response
+        def resolver():
+            time.sleep(10)
+            for i in responses:
+                i.resolve(TEST_RESPONSE)
+
+        # Start the resolving thread
+        t = threading.Thread(target=resolver)
+        t.daemon = True
+        t.start()
+
+        results = AsyncResponse.all_completed(responses, timeout=1)
+
+
+    def test_resolved_with_exception(self):
+        """
+        Test resolving AsyncResponse with exception
+        """
+
+        resp = AsyncResponse()
+
+        # resolve with an exception
+        resp.resolve(ValueError('Test Error'))
+
+        self.assertTrue(resp.is_exception)
+
+        # Assert that response is raising
+        self.assertRaises(ValueError, resp.response)
+
+        # Assert that using all_completed/as_completed raises
+        self.assertRaises(ValueError, AsyncResponse.all_completed, [resp])
+
+        self.assertRaises(ValueError, lambda : list(AsyncResponse.as_completed([resp])))
