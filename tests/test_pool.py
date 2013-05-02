@@ -231,7 +231,6 @@ class TestAsyncResponse(unittest.TestCase):
         for i in results:
             self.assertEquals(i, TEST_RESPONSE)
 
-
     @raises(TimeoutError)
     def test_all_completed_with_timeout(self):
         """
@@ -256,7 +255,6 @@ class TestAsyncResponse(unittest.TestCase):
 
         results = AsyncResponse.all_completed(responses, timeout=1)
 
-
     def test_resolved_with_exception(self):
         """
         Test resolving AsyncResponse with exception
@@ -275,4 +273,28 @@ class TestAsyncResponse(unittest.TestCase):
         # Assert that using all_completed/as_completed raises
         self.assertRaises(ValueError, AsyncResponse.all_completed, [resp])
 
-        self.assertRaises(ValueError, lambda : list(AsyncResponse.as_completed([resp])))
+        self.assertRaises(ValueError, lambda: list(AsyncResponse.as_completed([resp])))
+
+    def test_create_pool_from_child_thread(self):
+        """
+        Test creation of a pool from inside a child thread.
+
+        """
+
+        def create_and_run(cb):
+            def f(i):
+                return i
+
+            p = Pool(TEST_SECRET_KEY, TEST_ACCESS_KEY)
+            r = p.pool.map_async(f, range(5))
+            cb(r.get())
+
+        self.data = None
+
+        t = threading.Thread(target=create_and_run, args=[self._child_thread_pool_callback])
+        t.start()
+        t.join()
+        self.assertEquals([0,1,2,3,4], self.data)
+
+    def _child_thread_pool_callback(self, data):
+        self.data = data

@@ -2,6 +2,7 @@
 import time
 from multiprocessing import TimeoutError
 import threading
+import weakref
 from .conn import Base
 from multiprocessing.pool import ThreadPool
 import collections
@@ -30,6 +31,8 @@ class Pool(Base):
     def __init__(self, secret_key, access_key, default_bucket=None, ssl=False, size=5):
         super(Pool, self).__init__(secret_key, access_key, ssl=ssl, default_bucket=default_bucket)
 
+        self._fix_pool_child_thread_issue()
+
         self.pool = ThreadPool(processes=size)
 
     def _handle_request(self, request):
@@ -56,6 +59,18 @@ class Pool(Base):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    def _fix_pool_child_thread_issue(self):
+        """
+        Fix an issue with ThreadPool and using it from child threads
+
+        I've used a workaround from this url:
+        http://bugs.python.org/issue10015
+        """
+
+        if not hasattr(threading.current_thread(), "_children"):
+            threading.current_thread()._children = weakref.WeakKeyDictionary()
+
 
 
 class AsyncResponse(object):
