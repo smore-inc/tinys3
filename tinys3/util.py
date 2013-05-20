@@ -56,6 +56,5 @@ class LenWrapperStream(object):
     def closed(self):
         return self.stream.closed
 
-
     def __repr__(self):
         return repr(self.stream)

@@ -1,257 +1,101 @@
-# -*- coding: utf-8 -*-
-import time
-from multiprocessing import TimeoutError
-import threading
-import weakref
+# -*- coding: utf-8 -*
 from .conn import Base
-from multiprocessing.pool import ThreadPool
-import collections
 
-# Support for python 2/3
-try:
-    from Queue import Queue
-except ImportError:
-    from queue import Queue
-
-
-def async_handle_request(request):
-    try:
-        result = request.run()
-    except Exception as e:
-        result = e
-
-    return result
-
-# Adds support for callable for python 3
-def callable(thing):
-    return isinstance(thing, collections.Callable)
+from concurrent.futures import ThreadPoolExecutor, Future, as_completed, wait, TimeoutError
 
 
 class Pool(Base):
     def __init__(self, secret_key, access_key, default_bucket=None, ssl=False, size=5):
+        """
+        Create a new pool.
+
+        Params:
+            - secret_key        AWS secret key
+            - access_key        AWS access key
+            - default_bucket    (Optional) Sets the default bucket, so requests inside this pool won't have to specify
+                                the bucket every time.
+            - ssl               (Optional) Make the requests using secure connection (Defaults to False)
+            - size              (Optional) The maximum number of worker threads to use (Defaults to 5)
+
+        Notes:
+            - The pool uses the concurrent.futures library to implement the worker threads.
+            - You can use the pool as a context manager, and it will close itself (and it's workers) upon exit.
+
+        """
+
+        # Call to the base constructor
         super(Pool, self).__init__(secret_key, access_key, ssl=ssl, default_bucket=default_bucket)
 
-        self._fix_pool_child_thread_issue()
-
-        self.pool = ThreadPool(processes=size)
+        # Setup the executor
+        self.executor = ThreadPoolExecutor(max_workers=size)
 
     def _handle_request(self, request):
-        async_response = AsyncResponse()
+        """
+        Handle S3 request and return the result.
 
-        self.pool.apply_async(async_handle_request, [request],
-                              callback=lambda response: async_response.resolve(response))
+        Params:
+            - request   An instance of the S3Request object.
 
-        return async_response
+        Notes
+            - This implementation will execute the request in a different thread and return a Future object.
+        """
+        future = self.executor.submit(request.run)
+        return future
 
     def close(self, wait=True):
-        self.pool.close()
-        if wait:
-            self.pool.join()
+        """
+        Close the pool.
 
-    def as_completed(self, async_responses, timeout=None):
-        return AsyncResponse.as_completed(async_responses, timeout)
+        Params:
+            - Wait      (Optional) Should the close action block until all the work is completed? (Defaults to True)
+        """
+        self.executor.shutdown(wait)
 
-    def all_completed(self, async_responses, timeout=None):
-        return AsyncResponse.all_completed(async_responses, timeout)
+    def as_completed(self, futures, timeout=None):
+        """
+        Returns an iterator that yields the response for every request when it's completed.
+
+        A thin wrapper around concurrent.futures.as_completed.
+
+        Params:
+            - futures   A list of Future objects
+            - timeout   (Optional) The number of seconds to wait until a TimeoutError is raised
+
+        Notes:
+            - The order of the results may not be preserved
+            - For more information:
+                http://docs.python.org/dev/library/concurrent.futures.html#concurrent.futures.as_completed
+        """
+        for r in as_completed(futures, timeout):
+            yield r.result()
+
+    def all_completed(self, futures, timeout=None):
+        """
+        Blocks until all the futures are completed, returns a list of responses
+
+        A thin wrapper around concurrent.futures.wait.
+
+        Params:
+            - futures   A list of Future objects
+            - timeout   (Optional) The number of seconds to wait until a TimeoutError is raised
+
+        Notes:
+            - For more information:
+                http://docs.python.org/dev/library/concurrent.futures.html#concurrent.futures.wait
+        """
+
+        results = wait(futures, timeout)[0]  # Return the 'done' set
+
+        return [i.result() for i in results]
 
     def __enter__(self):
+        """
+        Context manager implementation
+        """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Closes the pool
+        """
         self.close()
-
-    def _fix_pool_child_thread_issue(self):
-        """
-        Fix an issue with ThreadPool and using it from child threads
-
-        I've used a workaround from this url:
-        http://bugs.python.org/issue10015
-        """
-
-        if not hasattr(threading.current_thread(), "_children"):
-            threading.current_thread()._children = weakref.WeakKeyDictionary()
-
-
-
-class AsyncResponse(object):
-    """
-    A result for an S3 job with support for async handling
-
-    Notes:
-     - The locking/timeout mechanism code was copied from Python's multiprocessing ApplyAsync code
-    """
-
-    def __init__(self, callback=None):
-        self._response = None
-        self._completed = False
-        self.is_exception = False
-
-        # Our lock condition
-        self._cond = threading.Condition(threading.Lock())
-
-        self._callbacks = []
-
-        if callable(callback):
-            self._callbacks.append(callback)
-
-    def resolve(self, value):
-        """
-        Set the value of the AsyncResponse object
-
-        Params:
-            - value     The desired value
-            - success   is this a successful result?
-        """
-
-        # Sanity, check that we're not setting an already set value
-        if self._completed:
-            raise ValueError("Can't set an already set value!")
-
-        # Store the value
-        self._response = value
-
-        if isinstance(value, Exception):
-            self.is_exception = True
-
-        self._cond.acquire()
-        try:
-            self._completed = True
-            self._cond.notify()
-        finally:
-            self._cond.release()
-
-        # Invoke callback
-        for c in self._callbacks:
-            c(self._response)
-
-    @property
-    def completed(self):
-        """
-        Is the result ready?
-        """
-        return self._completed
-
-
-    def wait(self, timeout=None):
-        """
-        Wait to the result to be completed.
-
-        Params:
-            - timeout   The number of seconds to wait for the result to complete
-
-        Notes:
-            - This is a low level method for waiting to the result, if you just want
-              the result, use response()
-
-            - As this method will always catch the timeout exception, you should ALWAYS check
-              that the result is ready after this method returns!
-        """
-        self._cond.acquire()
-        try:
-            if not self._completed:
-                self._cond.wait(timeout)
-        finally:
-            self._cond.release()
-
-    def response(self, timeout=None):
-        """
-         Get the result, if it's set
-        """
-        self.wait(timeout)
-        if not self._completed:
-            raise TimeoutError
-
-        # If our response is an exception, raise it
-        if self.is_exception:
-            raise self._response
-
-        return self._response
-
-    def add_callback(self, callback):
-        """
-        Add another callback to the result
-
-        Params:
-            - callback  a callable object that will function as the callback
-
-        Notes:
-            - If the result is already completed, the callback will be invoked immediately
-        """
-        # Make sure the callback is callable
-        assert callable(callback)
-
-        # if not ready yet, append to callbacks
-        if not self.completed:
-            self._callbacks.append(callback)
-        else:
-            # Call it immediately
-            callback(self._response)
-
-
-    @classmethod
-    def all_completed(cls, async_responses, timeout=None):
-        """
-        Wait for all the async responses to complete, return a list with the responses
-        """
-
-        queue = TimeoutQueue()
-
-        for r in async_responses:
-            queue.put('DUMMY_VALUE')
-            r.add_callback(lambda response: queue.task_done())
-
-        # Wait until everything is completed
-        queue.join_queue(timeout=timeout)
-
-        return list(r.response() for r in async_responses)
-
-    @classmethod
-    def as_completed(cls, async_responses, timeout=None):
-        """
-        A generator that return responses as they are completed
-        """
-
-        queue = Queue()
-
-        pending = len(async_responses)
-
-        for r in async_responses:
-            r.add_callback(lambda response: queue.put(response))
-
-        while pending > 0:
-            r = queue.get(timeout=timeout)
-
-            # Handle the case of an exception
-            if isinstance(r, Exception):
-                raise r
-
-            yield r
-
-            pending -= 1
-
-    def __repr__(self):
-        return "<AsyncResponse completed=%s>" % self._completed
-
-
-class TimeoutQueue(Queue):
-    """
-    A simple class to implement Timeout queue
-    """
-
-    def join_queue(self, timeout=None):
-        self.all_tasks_done.acquire()
-        try:
-            if timeout is None:
-                while self.unfinished_tasks:
-                    self.all_tasks_done.wait()
-            elif timeout < 0:
-                raise ValueError("'timeout' must be a positive number")
-            else:
-                endtime = int(time.time()) + timeout
-                while self.unfinished_tasks:
-                    remaining = endtime - int(time.time())
-                    if remaining <= 0.0:
-                        raise TimeoutError
-                    self.all_tasks_done.wait(remaining)
-        finally:
-            self.all_tasks_done.release()

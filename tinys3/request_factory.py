@@ -14,11 +14,11 @@ import mimetypes
 import os
 import requests
 
-# A fix for windows pc issues with mimetypes
-# http://grokbase.com/t/python/python-list/129tb1ygws/mimetypes-guess-type-broken-in-windows-on-py2-7-and-python-3-x
 from .util import LenWrapperStream
 
-# Fix mimetypes on windows
+
+# A fix for windows pc issues with mimetypes
+# http://grokbase.com/t/python/python-list/129tb1ygws/mimetypes-guess-type-broken-in-windows-on-py2-7-and-python-3-x
 mimetypes.init([])
 
 
@@ -115,6 +115,8 @@ class UploadRequest(S3Request):
                                    headers=headers,
                                    auth=self.auth)
 
+            r.raise_for_status()
+
         finally:
             # if close is set, try to close the fp like object (also, use finally to ensure the close)
             if self.close and hasattr(self.fp, 'close'):
@@ -150,7 +152,11 @@ class DeleteRequest(S3Request):
 
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
-        return self.adapter().delete(url, auth=self.auth)
+        r = self.adapter().delete(url, auth=self.auth)
+
+        r.raise_for_status()
+
+        return r
 
 
 class CopyRequest(S3Request):
@@ -176,7 +182,10 @@ class CopyRequest(S3Request):
         if self.metadata:
             headers.update(self.metadata)
 
-        return self.adapter().put(self.bucket_url(self.to_key, self.to_bucket), auth=self.auth, headers=headers)
+        r = self.adapter().put(self.bucket_url(self.to_key, self.to_bucket), auth=self.auth, headers=headers)
+        r.raise_for_status()
+
+        return r
 
 
 class UpdateMetadataRequest(CopyRequest):
