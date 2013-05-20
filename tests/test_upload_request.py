@@ -49,9 +49,16 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
+
+    def _mock_response(self):
+        """
+        Create a mock response with 'raise_for_status' method
+        """
+
+        return flexmock(raise_for_status=lambda: None)
 
     def test_upload_content_type(self):
         """
@@ -76,7 +83,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
 
@@ -95,7 +102,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
 
@@ -121,7 +128,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
 
@@ -141,7 +148,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
 
@@ -162,7 +169,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
 
@@ -187,7 +194,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
 
@@ -211,7 +218,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
 
@@ -240,7 +247,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        )
+        ).and_return(self._mock_response())
 
         r.run()
 
