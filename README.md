@@ -183,21 +183,23 @@ Using the pool to perform actions:
 ```python
 # Let's use the pool to delete a file
 r = pool.delete('a_key_to_delete.zip','my_bucket')
->>> <AsyncResponse completed=False>
+>>> <Future at 0x2c8de48L state=pending>
 
-# The AsyncResponse is a wrapper to allow us to work with the async nature of the pool
+# Futures are the standard python implementation of the "promise" pattern.
+# You can read more about them here:
+# http://docs.python.org/3.3/library/concurrent.futures.html#future-objects
 
 # is completed?
-r.completed()
+r.done()
 >>> False
 
 # Block until the response is completed
-r.response()
+r.result()
 >>> <Response [200]>
 
 # Block until completed with a timeout.
 # if the response is not completed until the timeout has passed, a TimeoutError will be raised
-r.response(timeout=120)
+r.result(timeout=120)
 >>> <Response [200]>
 
 ```
@@ -209,17 +211,17 @@ Using as_completed and all_completed:
 requests = [pool.delete('key%s' % i, 'my_bucket') for i in range(100)]
 
 # The helper methods as_completed and all_completed helps us work
-# with multiple AsyncResponse objects.
+# with multiple Future objects.
 
 # This will block until all the requests are completed
-# The results are the responses themselves, without the AsyncResponse wrappers
+# The results are the responses themselves, without the Future wrappers
 pool.all_completed(requests)
 >>> [<Response [200]>, ... ]
 
 
 # The as_completed generator will yield on every completed request:
 for r in pool.as_completed(requests)
-    # r is the response object itself, without the AsyncResponse wrapper
+    # r is the response object itself, without the Future wrapper
     print r
 ```
 
