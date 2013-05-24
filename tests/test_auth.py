@@ -108,7 +108,6 @@ Tue, 27 Mar 2007 21:20:26 +0000
         self.assertEquals(mock_request.headers['Authorization'],
                           'AWS AKIAIOSFODNN7EXAMPLE:lx3byBScXR6KzyMaifNkardMwNk=')
 
-
     def test_upload(self):
         mock_request = Request(method='PUT',
                                url="http://static.johnsmith.net:8080/db-backup.dat.gz",
@@ -143,6 +142,22 @@ x-amz-meta-reviewedby:joe@johnsmith.net,jane@johnsmith.net
         # test authorization code
         self.assertEquals(mock_request.headers['Authorization'],
                           'AWS AKIAIOSFODNN7EXAMPLE:ilyl83RwaSoYIEdixDQcA4OnAnc=')
+
+    def test_upload_0_length_file(self):
+        """
+        Make sure the auth adds content-length: 0 if we don't have any content length defined (for put requests)
+        """
+
+        mock_request = Request(method='PUT',
+                               url="http://static.johnsmith.net:8080/db-backup.dat.gz",
+                               headers={'Date': 'Tue, 27 Mar 2007 21:06:08 +0000',
+                                        'x-amz-acl': 'public-read',
+                                        'Content-type': 'application/x-download'})
+        # Call auth
+        self.auth(mock_request)
+
+        # test Content-Length
+        self.assertEquals(mock_request.headers['Content-Length'], '0')
 
     def test_list_all_buckets(self):
         mock_request = Request(method='GET',
@@ -242,7 +257,6 @@ x-amz-xyz:xyz
 
         self.assertEquals(self.auth.string_to_sign(mock_request), target)
 
-
     def test_sts_includes_x_amz_headers_that_are_lower_cased(self):
         mock_request = Request(method='POST', url='/',
                                headers={'Date': 'DATE-STRING',
@@ -324,7 +338,6 @@ DATE-STRING
 """.strip()
 
         self.assertEquals(self.auth.string_to_sign(mock_request), target)
-
 
     def test_sts_includes_sub_resource_value_when_present(self):
         mock_request = Request(method='POST', url='/bucket_name/key?versionId=123',

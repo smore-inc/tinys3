@@ -149,7 +149,21 @@ class S3Auth(AuthBase):
     def _get_date(self):
         return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
 
+    def _fix_content_length(self, request):
+        """
+        Amazon requires to have content-length header when using the put request,
+        However, requests won't add this header, so we need to add it ourselves.
+
+        Params:
+            - request   The request object
+        """
+
+        if request.method == 'PUT' and not 'Content-Length' in request.headers:
+            request.headers['Content-Length'] = '0'
+
     def __call__(self, r):
         msg = self.string_to_sign(r)
         r.headers['Authorization'] = "AWS %s:%s" % (self.access_key, self.sign(msg))
+
+        self._fix_content_length(r)
         return r
