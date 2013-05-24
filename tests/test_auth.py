@@ -16,7 +16,7 @@ TEST_SECRET_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
 class TestS3Auth(unittest.TestCase):
     def setUp(self):
         # Create a new auth object for every test
-        self.auth = S3Auth(TEST_SECRET_KEY, TEST_ACCESS_KEY)
+        self.auth = S3Auth(TEST_ACCESS_KEY, TEST_SECRET_KEY)
 
     def test_object_get(self):
         mock_request = Request(method='GET',
@@ -169,7 +169,7 @@ x-amz-meta-reviewedby:joe@johnsmith.net,jane@johnsmith.net
                           'AWS AKIAIOSFODNN7EXAMPLE:DNEZGsoieTZ92F3bUfSPQcbGmlM=')
 
     def test_simple_signature(self):
-        self.auth = S3Auth('secret', 'AKID')
+        self.auth = S3Auth('AKID', 'secret')
         mock_request = Request(method='POST', url='/', headers={'Date': 'DATE-STRING'})
 
         flexmock(self.auth).should_receive('string_to_sign').and_return('string-to-sign')
@@ -353,20 +353,21 @@ DATE-STRING
 """.strip()
 
         self.assertEquals(self.auth.string_to_sign(mock_request), target)
-#
-#     def test_sts_sorts_sub_resources_by_name(self):
-#         mock_request = Request(method='POST', url='/?logging&acl&website&torrent=123',
-#                                headers={'Date': 'DATE-STRING'})
-#
-#         target = """
-# POST
-#
-#
-# DATE-STRING
-# /?acl&logging&torrent=123&website
-# """.strip()
-#
-#         self.assertEquals(self.auth.string_to_sign(mock_request), target)
+
+    #
+    #     def test_sts_sorts_sub_resources_by_name(self):
+    #         mock_request = Request(method='POST', url='/?logging&acl&website&torrent=123',
+    #                                headers={'Date': 'DATE-STRING'})
+    #
+    #         target = """
+    # POST
+    #
+    #
+    # DATE-STRING
+    # /?acl&logging&torrent=123&website
+    # """.strip()
+    #
+    #         self.assertEquals(self.auth.string_to_sign(mock_request), target)
 
     def test_sts_includes_the_un_decoded_query_string_param_for_sub_resources(self):
         mock_request = Request(method='POST', url='/?versionId=a%2Bb',
@@ -381,7 +382,9 @@ DATE-STRING
 """.strip()
 
         self.assertEquals(self.auth.string_to_sign(mock_request), target)
-#
+
+        #
+
 #     def test_sts_includes_the_non_encoded_query_string_get_header_overrides(self):
 #         mock_request = Request(method='POST', url='/?response-content-type=a%2Bb',
 #                                headers={'Date': 'DATE-STRING'})

@@ -28,7 +28,7 @@ class S3Auth(AuthBase):
     Authenticate S3 requests
     """
 
-    def __init__(self, secret_key, access_key):
+    def __init__(self, access_key, secret_key):
         """
 
         """
@@ -41,7 +41,6 @@ class S3Auth(AuthBase):
                           digestmod=hashlib.sha1).digest()
 
         return base64.b64encode(digest).strip().decode('ascii')
-
 
     def string_to_sign(self, request):
         h = CaseInsensitiveDict()

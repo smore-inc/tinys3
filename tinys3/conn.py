@@ -5,16 +5,16 @@ from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, 
 
 
 class Base(object):
-    def __init__(self, secret_key, access_key, default_bucket=None, ssl=False):
+    def __init__(self, access_key, secret_key, default_bucket=None, ssl=False):
         """
         Creates a new S3 connection
 
-        :param secret_key:
         :param access_key:
+        :param secret_key:
         :param default_bucket:
         """
         self.default_bucket = default_bucket
-        self.auth = S3Auth(secret_key, access_key)
+        self.auth = S3Auth(access_key, secret_key)
         self.ssl = ssl
 
     def bucket(self, bucket):

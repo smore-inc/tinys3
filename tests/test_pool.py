@@ -21,7 +21,7 @@ class TestPool(unittest.TestCase):
         """
 
         # Test new pool with auth
-        pool = Pool(TEST_SECRET_KEY, TEST_ACCESS_KEY, default_bucket='bucket', ssl=True)
+        pool = Pool(TEST_ACCESS_KEY, TEST_SECRET_KEY, default_bucket='bucket', ssl=True)
 
         self.assertEquals(pool.ssl, True)
         self.assertEquals(pool.default_bucket, 'bucket')
@@ -29,7 +29,7 @@ class TestPool(unittest.TestCase):
         self.assertTrue(isinstance(pool.executor, ThreadPoolExecutor))
 
         # Test new pool with different size
-        pool = Pool(TEST_SECRET_KEY, TEST_ACCESS_KEY, size=25)
+        pool = Pool(TEST_ACCESS_KEY, TEST_SECRET_KEY, size=25)
         self.assertEquals(pool.executor._max_workers, 25)
 
 
@@ -42,7 +42,7 @@ class TestPool(unittest.TestCase):
         futures = [Future(), Future(), Future()]
 
         # Create a default pool
-        pool = Pool(TEST_SECRET_KEY, TEST_ACCESS_KEY)
+        pool = Pool(TEST_ACCESS_KEY, TEST_SECRET_KEY)
 
         # Resolve futures with a simple object
         for i in futures:
@@ -60,7 +60,7 @@ class TestPool(unittest.TestCase):
         futures = [Future(), Future(), Future()]
 
         # Create a default pool
-        pool = Pool(TEST_SECRET_KEY, TEST_ACCESS_KEY)
+        pool = Pool(TEST_ACCESS_KEY, TEST_SECRET_KEY)
 
         # Resolve futures with a simple object
         for i in futures:
@@ -75,7 +75,7 @@ class TestPool(unittest.TestCase):
         Test the pool's context_management ability
         """
 
-        pool = Pool(TEST_SECRET_KEY, TEST_ACCESS_KEY)
+        pool = Pool(TEST_ACCESS_KEY, TEST_SECRET_KEY)
 
         flexmock(pool).should_receive('close')
 

@@ -10,7 +10,7 @@ Usage example:
 ```python
 import tinys3
 
-conn = tinys3.Conn(S3_SECRET_KEY,S3_ACCESS_KEY,ssl=True)
+conn = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True)
 
 with open('some_file.zip','rb') as f:
     conn.upload('some_file.zip',f,'my_bucket', expires='max')
@@ -59,7 +59,7 @@ Uploading a simple file:
 import tinys3
 
 # Creating a simple connection
-conn = tinys3.Conn(S3_SECRET_KEY,S3_ACCESS_KEY)
+conn = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY)
 
 # Uploading a single file
 with open('some_file.zip','rb') as f:
@@ -71,7 +71,7 @@ Some more options for the connection:
 ```python
 
 # Specifying a default bucket
-conn = tinys3.Conn(S3_SECRET_KEY,S3_ACCESS_KEY,default='my_bucket')
+conn = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,default='my_bucket')
 
 # So we could skip the bucket parameter on every request
 
@@ -79,7 +79,7 @@ with open('some_file.zip','rb') as f:
     conn.upload('some_file.zip',f)
 
 # Controlling the use of ssl
-conn = tinys3.Conn(S3_SECRET_KEY,S3_ACCESS_KEY,ssl=True)
+conn = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True)
 ```
 
 Setting expiry headers
@@ -165,17 +165,17 @@ Using tinys3's Pool
 Creating a pool:
 
 ```python
-pool = tinys3.Conn(S3_SECRET_KEY,S3_ACCESS_KEY)
+pool = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY)
 ```
 
 The pool can use the same parameters as Conn:
 ```python
-pool = tinys3.Conn(S3_SECRET_KEY,S3_ACCESS_KEY,ssl=True, default_bucket='my_bucket')
+pool = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True, default_bucket='my_bucket')
 ```
 
 The pool is using 5 worker threads by default. The param 'size' allows us to override it:
 ```python
-pool = tinys3.Conn(S3_SECRET_KEY,S3_ACCESS_KEY,size=25)
+pool = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,size=25)
 ```
 
 Using the pool to perform actions:
