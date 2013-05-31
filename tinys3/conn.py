@@ -5,21 +5,38 @@ from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, 
 
 
 class Base(object):
+    """
+    The "Base" connection object, Handles the common S3 tasks (upload, copy, delete,etc)
+
+    This is an "abstract" class, both Conn and Pool implement it.
+    """
+
     def __init__(self, access_key, secret_key, default_bucket=None, ssl=False):
         """
         Creates a new S3 connection
 
-        :param access_key:
-        :param secret_key:
-        :param default_bucket:
+        Params:
+            - access_key        AWS access key
+            - secret_key        AWS secret key
+            - default_bucket    (Optional) Sets the default bucket, so requests inside this pool won't have to specify
+                                the bucket every time.
+            - ssl               (Optional) Make the requests using secure connection (Defaults to False)
+
         """
         self.default_bucket = default_bucket
         self.auth = S3Auth(access_key, secret_key)
         self.ssl = ssl
 
     def bucket(self, bucket):
+        """
+        Verifies that we have a bucket for a request
+
+        Params:
+            - bucket    The name of the bucket we're trying to use, None if we want to use the default bucket
+        """
         b = bucket or self.default_bucket
 
+        # If we don't have a bucket, raise an exception
         if not b:
             raise ValueError("You must specify a bucket in your request or set the default_bucket for the connection")
 

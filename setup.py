@@ -3,14 +3,14 @@
 from distutils.core import setup
 
 setup(name='tinys3',
-      version='0.1.5',
+      version='0.1.6',
       description=("A small library for uploading files to S3,"
                    "With support of async uploads, worker pools, cache headers etc"),
 
       author='Shlomi Atar',
       author_email='shlomi@smore.com',
       url='https://github.com/smore-inc/tinys3',
-      packages=['tinys3', 'tests'],
+      packages=['tinys3'],
 
       classifiers=[
           # make sure to use :: Python *and* :: Python :: 3 so
