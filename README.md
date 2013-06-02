@@ -5,6 +5,8 @@ tinys3
 
 A simple python S3 upload library. Inspired by requests.
 
+tinys3 is used in [Smore](https://www.smore.com) to upload more than 1.5 million keys to S3 every month.
+
 Usage example:
 
 ```python
@@ -37,9 +39,6 @@ Support
 * Python 3.3
 * PyPy
 
-Usage
------
-tinys3 is used in [Smore](https://www.smore.com) to upload more than 1.5 million keys to S3 every month.
 
 
 Installation
