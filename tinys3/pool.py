@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, Future, as_completed, wait, T
 
 
 class Pool(Base):
-    def __init__(self, access_key,secret_key, default_bucket=None, ssl=False, size=5):
+    def __init__(self, access_key, secret_key, default_bucket=None, ssl=False, size=5):
         """
         Create a new pool.
 

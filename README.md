@@ -3,7 +3,7 @@ tinys3
 
 [![Build Status](https://travis-ci.org/smore-inc/tinys3.png?branch=master)](https://travis-ci.org/smore-inc/tinys3)
 
-A simple python S3 upload library. Inspired by requests
+A simple python S3 upload library. Inspired by requests.
 
 Usage example:
 
@@ -27,7 +27,6 @@ Features
 * Update key's metadata
 * Simple way to set expires headers, content type, content publicity
 * Pool implementation for fast multi-threaded actions
-* Bucket keys iterator
 
 
 Support
@@ -37,6 +36,11 @@ Support
 * Python 3.2
 * Python 3.3
 * PyPy
+
+Usage
+-----
+tinys3 is used in [Smore](https://www.smore.com) to upload more than 1.5 million keys to S3 every month.
+
 
 Installation
 ------------
@@ -87,11 +91,11 @@ Setting expiry headers
 ```python
 
 # File will be stored in cache for one hour:
-conn.upload('my_awesome_key.zip','my_local_file.zip',bucket='sample_bucket',
+conn.upload('my_awesome_key.zip',f,bucket='sample_bucket',
             expires=3600)
 
 # Passing 'max' as the value to 'expires' will make it cachable for a year
-conn.upload('my_awesome_key.zip','my_local_file.zip',bucket='sample_bucket',
+conn.upload('my_awesome_key.zip',f,bucket='sample_bucket',
             expires='max')
 
 # Expires can also handle timedelta object:
@@ -99,21 +103,21 @@ from datetime import timedelta
 
 t = timedelta(weeks=5)
 # File will be stored in cache for 5 weeks
-conn.upload('my_awesome_key.zip','my_local_file.zip',bucket='sample_bucket',
+conn.upload('my_awesome_key.zip',f,bucket='sample_bucket',
             expires=t)
 ```
 
 tinys3 will try to guess the content type from the key, but you can override it:
 
 ```python
-conn.upload('my_awesome_key.zip','my_local_file.zip',bucket='sample_bucket',
+conn.upload('my_awesome_key.zip',f,bucket='sample_bucket',
             content_type='application/zip')
 ```
 
 Setting additional headers is also possible by passing a dict to the headers kwarg:
 
 ```python
-conn.upload('my_awesome_key.zip','my_local_file.zip',bucket='sample_bucket',
+conn.upload('my_awesome_key.zip',f,bucket='sample_bucket',
             headers={
             'x-amz-storage-class': 'REDUCED_REDUNDANCY'
             })
@@ -146,7 +150,7 @@ conn.copy('source_key.jpg','source_bucket','target_key.jpg','target_bucket',
 
 ```
 
-Deleting keys
+Updating metadata
 -------------
 
 ```python
@@ -159,23 +163,34 @@ conn.update_metadata('key.jpg',{},'my_bucket',public=False)
 
 ```
 
+Deleting keys
+-------------
+
+```python
+
+# Deleting keys is simple
+conn.delete_key('key.jpg','my_bucket')
+
+```
+
+
 Using tinys3's Pool
 -------------------
 
 Creating a pool:
 
 ```python
-pool = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY)
+pool = tinys3.Pool(S3_ACCESS_KEY,S3_SECRET_KEY)
 ```
 
 The pool can use the same parameters as Conn:
 ```python
-pool = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True, default_bucket='my_bucket')
+pool = tinys3.Pool(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True, default_bucket='my_bucket')
 ```
 
 The pool is using 5 worker threads by default. The param 'size' allows us to override it:
 ```python
-pool = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,size=25)
+pool = tinys3.Pool(S3_ACCESS_KEY,S3_SECRET_KEY,size=25)
 ```
 
 Using the pool to perform actions:
