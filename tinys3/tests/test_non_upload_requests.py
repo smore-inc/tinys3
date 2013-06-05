@@ -14,7 +14,7 @@ class TestNonUploadRequests(unittest.TestCase):
         """
         Create a default connection
         """
-        self.conn = Connection("TEST_ACCESS_KEY", "TEST_SECRET_KEY", ssl=True)
+        self.conn = Connection("TEST_ACCESS_KEY", "TEST_SECRET_KEY", tls=True)
 
     def test_url_generation(self):
         """
@@ -23,12 +23,12 @@ class TestNonUploadRequests(unittest.TestCase):
 
         r = S3Request(self.conn)
 
-        # Simple with ssl
+        # Simple with tls
         url = r.bucket_url('test_key', 'test_bucket')
         self.assertEqual(url, 'https://s3.amazonaws.com/test_bucket/test_key', 'Simple url with SSL')
 
         # change connection to non-http
-        self.conn.ssl = False
+        self.conn.tls = False
 
         r = S3Request(self.conn)
 

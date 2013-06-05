@@ -13,7 +13,7 @@ TEST_DATA = 'test test test' * 2
 
 class TestConn(unittest.TestCase):
     def setUp(self):
-        self.conn = Connection(TEST_ACCESS_KEY,TEST_SECRET_KEY, default_bucket=TEST_BUCKET, ssl=True)
+        self.conn = Connection(TEST_ACCESS_KEY,TEST_SECRET_KEY, default_bucket=TEST_BUCKET, tls=True)
 
     def test_creation(self):
         """
@@ -22,4 +22,4 @@ class TestConn(unittest.TestCase):
 
         self.assertTrue(isinstance(self.conn.auth, S3Auth))
         self.assertEquals(self.conn.default_bucket, TEST_BUCKET)
-        self.assertEquals(self.conn.ssl, True)
+        self.assertEquals(self.conn.tls, True)

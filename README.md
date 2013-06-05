@@ -13,7 +13,7 @@ Usage example:
 ```python
 import tinys3
 
-conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True)
+conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,tls=True)
 
 f = open('some_file.zip','rb')
 conn.upload('some_file.zip',f,'my_bucket')
@@ -87,8 +87,8 @@ conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,default='my_bucket')
 f = open('some_file.zip','rb')
 conn.upload('some_file.zip',f)
 
-# Controlling the use of ssl
-conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True)
+# Controlling the use of TLS
+conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,tls=True)
 ```
 
 Setting expiry headers.
@@ -190,7 +190,7 @@ pool = tinys3.Pool(S3_ACCESS_KEY,S3_SECRET_KEY)
 
 The pool can use the same parameters as Connection:
 ```python
-pool = tinys3.Pool(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True, default_bucket='my_bucket')
+pool = tinys3.Pool(S3_ACCESS_KEY,S3_SECRET_KEY,tls=True, default_bucket='my_bucket')
 ```
 
 The pool uses 5 worker threads by default. The 'size' parameter allows us to override it:

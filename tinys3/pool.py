@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, Future, as_completed, wait, T
 
 
 class Pool(Base):
-    def __init__(self, access_key, secret_key, default_bucket=None, ssl=False, size=5):
+    def __init__(self, access_key, secret_key, default_bucket=None, tls=False, size=5):
         """
         Create a new pool.
 
@@ -14,7 +14,7 @@ class Pool(Base):
             - secret_key        AWS secret key
             - default_bucket    (Optional) Sets the default bucket, so requests inside this pool won't have to specify
                                 the bucket every time.
-            - ssl               (Optional) Make the requests using secure connection (Defaults to False)
+            - tls               (Optional) Make the requests using secure connection (Defaults to False)
             - size              (Optional) The maximum number of worker threads to use (Defaults to 5)
 
         Notes:
@@ -24,7 +24,7 @@ class Pool(Base):
         """
 
         # Call to the base constructor
-        super(Pool, self).__init__(access_key, secret_key, ssl=ssl, default_bucket=default_bucket)
+        super(Pool, self).__init__(access_key, secret_key, tls=tls, default_bucket=default_bucket)
 
         # Setup the executor
         self.executor = ThreadPoolExecutor(max_workers=size)

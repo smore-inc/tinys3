@@ -21,9 +21,9 @@ class TestPool(unittest.TestCase):
         """
 
         # Test new pool with auth
-        pool = Pool(TEST_ACCESS_KEY, TEST_SECRET_KEY, default_bucket='bucket', ssl=True)
+        pool = Pool(TEST_ACCESS_KEY, TEST_SECRET_KEY, default_bucket='bucket', tls=True)
 
-        self.assertEquals(pool.ssl, True)
+        self.assertEquals(pool.tls, True)
         self.assertEquals(pool.default_bucket, 'bucket')
         self.assertTrue(isinstance(pool.auth, S3Auth))
         self.assertTrue(isinstance(pool.executor, ThreadPoolExecutor))

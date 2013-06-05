@@ -25,10 +25,10 @@ mimetypes.init([])
 class S3Request(object):
     def __init__(self, conn):
         self.auth = conn.auth
-        self.ssl = conn.ssl
+        self.tls = conn.tls
 
     def bucket_url(self, key, bucket):
-        protocol = 'https' if self.ssl else 'http'
+        protocol = 'https' if self.tls else 'http'
 
         return "%s://s3.amazonaws.com/%s/%s" % (protocol, bucket, key.lstrip('/'))
 
