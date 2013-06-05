@@ -28,7 +28,7 @@ Features
 * Copy keys inside/between buckets
 * Delete keys
 * Update key metadata
-* Simple way to set key as public and setting Cache-Control and Content-Type
+* Simple way to set key as public or setting Cache-Control and Content-Type headers.
 * Pool implementation for fast multi-threaded actions
 
 
@@ -113,7 +113,7 @@ conn.upload('my_awesome_key.zip',f,bucket='sample_bucket',
 ```
 
 tinys3 will try to guess the content type from the key (using the mimetypes package),
-but you can override it
+but you can override it:
 
 ```python
 conn.upload('my_awesome_key.zip',f,bucket='sample_bucket',
@@ -129,8 +129,7 @@ conn.upload('my_awesome_key.zip',f,bucket='sample_bucket',
             })
 ```
 
-For more information, see [Amazon's S3 Documentation](http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUT.html
-)
+For more information, see [Amazon's S3 Documentation](http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPUT.html)
 
 
 Copy keys inside/between buckets
@@ -205,7 +204,7 @@ Using the pool to perform actions:
 >>> r = pool.delete('a_key_to_delete.zip','my_bucket')
 <Future at 0x2c8de48L state=pending>
 
-# Futures are the standard python implementation of the "promise" pattern.
+# Futures are the standard python implementation of the "promise" pattern
 # You can read more about them here:
 # http://docs.python.org/3.3/library/concurrent.futures.html#future-objects
 
@@ -217,14 +216,14 @@ False
 >>> r.result()
 <Response [200]>
 
-# Block until completed with a timeout.
+# Block until completed with a timeout
 # If the response is not completed until the timeout has passed, a TimeoutError will be raised
 >>> r.result(timeout=120)
 <Response [200]>
 
 ```
 
-Using as_completed and all_completed:
+Using as_completed and all_completed
 
 ```python
 # First we'll create a lot of async requests
@@ -233,14 +232,14 @@ Using as_completed and all_completed:
 >>>     requests.append(pool.delete('key' + str(i), 'my_bucket'))
 
 # The helper methods as_completed and all_completed helps us work
-# with multiple Future objects.
+# with multiple Future objects
 
 # This will block until all the requests are completed
 # The results are the responses themselves, without the Future wrappers
 >>> pool.all_completed(requests)
 [<Response [200]>, ... ]
 
-# The as_completed generator will yield on every completed request:
+# The as_completed generator will yield on every completed request.
 >>> for r in pool.as_completed(requests)
 >>>     # r is the response object itself, without the Future wrapper
 >>>     print r
