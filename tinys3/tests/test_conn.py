@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from tinys3 import Conn
+from tinys3 import Connection
 from tinys3.auth import S3Auth
 from flexmock import flexmock
 
@@ -13,7 +13,7 @@ TEST_DATA = 'test test test' * 2
 
 class TestConn(unittest.TestCase):
     def setUp(self):
-        self.conn = Conn(TEST_ACCESS_KEY,TEST_SECRET_KEY, default_bucket=TEST_BUCKET, ssl=True)
+        self.conn = Connection(TEST_ACCESS_KEY,TEST_SECRET_KEY, default_bucket=TEST_BUCKET, ssl=True)
 
     def test_creation(self):
         """

@@ -8,7 +8,7 @@ class Base(object):
     """
     The "Base" connection object, Handles the common S3 tasks (upload, copy, delete,etc)
 
-    This is an "abstract" class, both Conn and Pool implement it.
+    This is an "abstract" class, both Connection and Pool implement it.
     """
 
     def __init__(self, access_key, secret_key, default_bucket=None, ssl=False):
@@ -188,7 +188,7 @@ class Base(object):
         raise NotImplementedError
 
 
-class Conn(Base):
+class Connection(Base):
     """
     The basic implementation of an S3 connection.
     """

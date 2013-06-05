@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-from .conn import Base
+from .connection import Base
 
 from concurrent.futures import ThreadPoolExecutor, Future, as_completed, wait, TimeoutError
 

@@ -13,7 +13,7 @@ Usage example:
 ```python
 import tinys3
 
-conn = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True)
+conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True)
 
 f = open('some_file.zip','rb')
 conn.upload('some_file.zip',f,'my_bucket')
@@ -67,7 +67,7 @@ Uploading a single file:
 import tinys3
 
 # Creating a simple connection
-conn = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY)
+conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY)
 
 # Uploading a single file
 f = open('some_file.zip','rb')
@@ -80,7 +80,7 @@ Some more options for the connection:
 ```python
 
 # Specifying a default bucket
-conn = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,default='my_bucket')
+conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,default='my_bucket')
 
 # So we could skip the bucket parameter on every request
 
@@ -88,7 +88,7 @@ f = open('some_file.zip','rb')
 conn.upload('some_file.zip',f)
 
 # Controlling the use of ssl
-conn = tinys3.Conn(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True)
+conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True)
 ```
 
 Setting expiry headers.
@@ -188,7 +188,7 @@ Creating a pool:
 pool = tinys3.Pool(S3_ACCESS_KEY,S3_SECRET_KEY)
 ```
 
-The pool can use the same parameters as Conn:
+The pool can use the same parameters as Connection:
 ```python
 pool = tinys3.Pool(S3_ACCESS_KEY,S3_SECRET_KEY,ssl=True, default_bucket='my_bucket')
 ```

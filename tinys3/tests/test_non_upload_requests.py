@@ -4,7 +4,7 @@ import mimetypes
 import unittest
 from flexmock import flexmock
 from tinys3.request_factory import CopyRequest, S3Request, UpdateMetadataRequest, DeleteRequest
-from tinys3 import Conn
+from tinys3 import Connection
 
 TEST_AUTH = ("TEST_ACCESS_KEY", "TEST_SECRET_KEY")
 
@@ -14,7 +14,7 @@ class TestNonUploadRequests(unittest.TestCase):
         """
         Create a default connection
         """
-        self.conn = Conn("TEST_ACCESS_KEY", "TEST_SECRET_KEY", ssl=True)
+        self.conn = Connection("TEST_ACCESS_KEY", "TEST_SECRET_KEY", ssl=True)
 
     def test_url_generation(self):
         """

@@ -1,7 +1,7 @@
 from datetime import timedelta
 import unittest
 from flexmock import flexmock
-from tinys3 import Conn
+from tinys3 import Connection
 from tinys3.request_factory import UploadRequest
 
 
@@ -17,7 +17,7 @@ class TestUploadRequest(unittest.TestCase):
         """
         Create a default connection
         """
-        self.conn = Conn("TEST_ACCESS_KEY","TEST_SECRET_KEY", ssl=True)
+        self.conn = Connection("TEST_ACCESS_KEY","TEST_SECRET_KEY", ssl=True)
 
         self.dummy_data = StringIO('DUMMY_DATA')
 
