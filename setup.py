@@ -9,7 +9,7 @@ setup(name='tinys3',
 
       author='Shlomi Atar',
       author_email='shlomi@smore.com',
-      url='https://github.com/smore-inc/tinys3',
+      url='https://www.smore.com/labs/tinys3/',
       packages=['tinys3'],
 
       classifiers=[
