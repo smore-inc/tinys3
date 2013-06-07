@@ -1,5 +1,5 @@
 tinys3 - Quick and minimal S3 uploads for Python
-================================================
+------------------------------------------------
 
 [![Build Status](https://travis-ci.org/smore-inc/tinys3.png?branch=master)](https://travis-ci.org/smore-inc/tinys3)
 
