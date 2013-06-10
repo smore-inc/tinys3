@@ -164,7 +164,7 @@ Updating metadata
 conn.update_metadata('key.jpg',{ 'x-amz-storage-class': 'REDUCED_REDUNDANCY'},'my_bucket')
 
 # We can also change the privacy of a file, without updating it's metadata
-conn.update_metadata('key.jpg',{},'my_bucket',public=False)
+conn.update_metadata('key.jpg',bucket='my_bucket',public=False)
 
 ```
 

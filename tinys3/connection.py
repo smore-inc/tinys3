@@ -128,13 +128,13 @@ class Base(object):
 
         return self.run(r)
 
-    def update_metadata(self, key, metadata, bucket=None, public=True):
+    def update_metadata(self, key, metadata=None, bucket=None, public=True):
         """
         Updates the metadata information for a file
 
         Params:
             - key           The key to update
-            - metadata      The metadata dict to set for the key
+            - metadata      (Optional) The metadata dict to set for the key
             - public        (Optional) Same as upload, should the key be publicly accessible? Default to True.
 
         Returns:
