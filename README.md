@@ -2,6 +2,7 @@ tinys3 - Quick and minimal S3 uploads for Python
 ------------------------------------------------
 
 [![Build Status](https://travis-ci.org/smore-inc/tinys3.png?branch=master)](https://travis-ci.org/smore-inc/tinys3)
+[![Crate Info](https://pypip.in/d/tinys3/badge.png)](https://crate.io/packages/tinys3/)
 
 A simple Python S3 upload library.
 Inspired by one of my favorite packages, [requests](http://docs.python-requests.org/en/latest/).
