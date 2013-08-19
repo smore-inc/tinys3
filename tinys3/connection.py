@@ -11,7 +11,7 @@ class Base(object):
     This is an "abstract" class, both Connection and Pool implement it.
     """
 
-    def __init__(self, access_key, secret_key, default_bucket=None, tls=False):
+    def __init__(self, access_key, secret_key, default_bucket=None, tls=False, endpoint="s3.amazonaws.com"):
         """
         Creates a new S3 connection
 
@@ -21,11 +21,13 @@ class Base(object):
             - default_bucket    (Optional) Sets the default bucket, so requests inside this pool won't have to specify
                                 the bucket every time.
             - tls               (Optional) Make the requests using secure connection (Defaults to False)
+            - endpoint          (Optional) Sets the s3 endpoint.
 
         """
         self.default_bucket = default_bucket
         self.auth = S3Auth(access_key, secret_key)
         self.tls = tls
+        self.endpoint = endpoint
 
     def bucket(self, bucket):
         """
