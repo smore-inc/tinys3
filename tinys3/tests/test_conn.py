@@ -23,3 +23,4 @@ class TestConn(unittest.TestCase):
         self.assertTrue(isinstance(self.conn.auth, S3Auth))
         self.assertEquals(self.conn.default_bucket, TEST_BUCKET)
         self.assertEquals(self.conn.tls, True)
+        self.assertEquals(self.conn.endpoint, "s3.amazonaws.com")

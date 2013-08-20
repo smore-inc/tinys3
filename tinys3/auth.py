@@ -16,7 +16,7 @@ except ImportError:
     from urllib.parse import urlparse
 
 # A regexp used for detecting aws bucket names
-BUCKET_VHOST_MATCH = re.compile(r'^([a-z0-9\-]+\.)?s3\.amazonaws\.com$', flags=re.IGNORECASE)
+BUCKET_VHOST_MATCH = re.compile(r'^([a-z0-9\-]+\.)?s3([a-z0-9\-]+)?\.amazonaws\.com$', flags=re.IGNORECASE)
 
 # A list of query params used by aws
 AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle', 'versionid',

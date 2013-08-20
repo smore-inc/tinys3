@@ -26,11 +26,12 @@ class S3Request(object):
     def __init__(self, conn):
         self.auth = conn.auth
         self.tls = conn.tls
+        self.endpoint = conn.endpoint
 
     def bucket_url(self, key, bucket):
         protocol = 'https' if self.tls else 'http'
 
-        return "%s://s3.amazonaws.com/%s/%s" % (protocol, bucket, key.lstrip('/'))
+        return "%s://%s/%s/%s" % (protocol, self.endpoint, bucket, key.lstrip('/'))
 
     def run(self):
         raise NotImplementedError()

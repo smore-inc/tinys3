@@ -78,6 +78,7 @@ conn.upload('some_file.zip',f,'my_bucket')
 
 Some more options for the connection:
 
+
 ```python
 
 # Specifying a default bucket
@@ -90,6 +91,13 @@ conn.upload('some_file.zip',f)
 
 # Controlling the use of TLS
 conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,tls=True)
+```
+
+Specifying a different endpoint
+
+```python
+
+conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,endpoint='s3-website-us-west-2.amazonaws.com')
 ```
 
 Setting expiry headers.
