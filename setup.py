@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='tinys3',
-      version='0.1.8',
+      version='0.1.9',
       description=("A small library for uploading files to S3,"
                    "With support of async uploads, worker pools, cache headers etc"),
 
