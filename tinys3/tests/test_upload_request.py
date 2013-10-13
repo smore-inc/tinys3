@@ -17,7 +17,7 @@ class TestUploadRequest(unittest.TestCase):
         """
         Create a default connection
         """
-        self.conn = Connection("TEST_ACCESS_KEY","TEST_SECRET_KEY", tls=True)
+        self.conn = Connection("TEST_ACCESS_KEY", "TEST_SECRET_KEY", tls=True)
 
         self.dummy_data = StringIO('DUMMY_DATA')
 

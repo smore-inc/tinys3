@@ -64,7 +64,11 @@ class LenWrapperStream(object):
 
         # If we have a fileno property
         if hasattr(o, 'fileno'):
-            return os.fstat(o.fileno()).st_size
+            try:
+                return os.fstat(o.fileno()).st_size
+            except IOError:
+                pass  # fallback to the manual way, this is useful when using something like BytesIO
+
 
         # calculate based on bytes to end of content
         # get our start position
