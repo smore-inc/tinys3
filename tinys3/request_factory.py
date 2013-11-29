@@ -44,6 +44,21 @@ class S3Request(object):
         return requests
 
 
+class GetRequest(S3Request):
+    def __init__(self, conn, key, bucket):
+        super(GetRequest, self).__init__(conn)
+        self.key = key
+        self.bucket = bucket
+
+    def run(self):
+        url = self.bucket_url(self.key, self.bucket)
+        r = self.adapter().get(url, auth=self.auth)
+
+        r.raise_for_status()
+
+        return r
+
+
 class UploadRequest(S3Request):
     def __init__(self, conn, key, local_file, bucket, expires=None, content_type=None, public=True, extra_headers=None,
                  close=False, rewind=True):
