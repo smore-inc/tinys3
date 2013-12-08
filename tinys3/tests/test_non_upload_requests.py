@@ -3,7 +3,7 @@ from datetime import timedelta
 import mimetypes
 import unittest
 from flexmock import flexmock
-from tinys3.request_factory import CopyRequest, S3Request, UpdateMetadataRequest, DeleteRequest
+from tinys3.request_factory import CopyRequest, S3Request, UpdateMetadataRequest, DeleteRequest, GetRequest
 from tinys3 import Connection
 
 TEST_AUTH = ("TEST_ACCESS_KEY", "TEST_SECRET_KEY")
@@ -64,6 +64,20 @@ class TestNonUploadRequests(unittest.TestCase):
 
         mock.should_receive('delete').with_args('https://s3.amazonaws.com/bucket/key_to_delete',
                                                 auth=self.conn.auth).and_return(self._mock_response())
+
+        r.run()
+
+    def test_get_request(self):
+        """
+        Test the generation of a get request
+        """
+
+        r = GetRequest(self.conn, 'key_to_get', 'bucket')
+
+        mock = self._mock_adapter(r)
+
+        mock.should_receive('get').with_args('https://s3.amazonaws.com/bucket/key_to_get',
+                                             auth=self.conn.auth).and_return(self._mock_response())
 
         r.run()
 

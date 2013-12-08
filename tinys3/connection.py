@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .auth import S3Auth
-from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest
+from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest
 
 
 class Base(object):
@@ -49,6 +49,28 @@ class Base(object):
             raise ValueError("You must specify a bucket in your request or set the default_bucket for the connection")
 
         return b
+
+    def get(self, key, bucket=None):
+        """
+        Get a key from a bucket
+
+        Params:
+            - key           The key to get
+
+            - bucket        (Optional) The name of the bucket to use (can be skipped if setting the default_bucket)
+                            option for the connection
+
+        Returns:
+            - A response object from the requests lib or a future that wraps that response object if used with a pool.
+
+        Usage:
+
+        >>> conn.get('my_awesome_key.zip','sample_bucket')
+
+        """
+        r = GetRequest(self, key, self.bucket(bucket))
+
+        return self.run(r)
 
     def upload(self, key, local_file,
                bucket=None, expires=None, content_type=None,

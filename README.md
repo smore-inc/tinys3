@@ -14,7 +14,7 @@ Usage example:
 ```python
 import tinys3
 
-conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,tls=True)
+conn = tinys3.Connection(S3_ACCESS_KEY, S3_SECRET_KEY, tls=True, endpoint='s3-eu-west-1.amazonaws.com')
 
 f = open('some_file.zip','rb')
 conn.upload('some_file.zip',f,'my_bucket')
@@ -25,6 +25,7 @@ conn.upload('some_file.zip',f,'my_bucket')
 Features
 --------
 
+* Get files from S3
 * Upload files to S3
 * Copy keys inside/between buckets
 * Delete keys
