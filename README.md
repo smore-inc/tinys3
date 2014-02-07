@@ -83,7 +83,7 @@ Some more options for the connection:
 ```python
 
 # Specifying a default bucket
-conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,default='my_bucket')
+conn = tinys3.Connection(S3_ACCESS_KEY,S3_SECRET_KEY,default_bucket='my_bucket')
 
 # So we could skip the bucket parameter on every request
 
