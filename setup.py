@@ -6,7 +6,7 @@ try:
 except ImportError
     from distutils.core import setup
 
-install_requires = ['requests >= 1.2.0', 'nose', 'flexmock']
+install_requires = ['requests >= 1.2.0']
 if sys.version_info < (3, 2):
     install_requires.insert(0, 'futures >= 2.1.3')
 
@@ -31,5 +31,7 @@ setup(name='tinys3',
       keywords=('amazon', 'aws', 's3', 'upload'),
 
       package_dir={'': '.'},
-      install_requires=install_requires
+      install_requires=install_requires,
+      tests_require=['nose', 'flexmock'],
+      test_suite='tinys3.tests'
 )
