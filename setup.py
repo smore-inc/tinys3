@@ -3,7 +3,7 @@ import sys
 
 try:
     from setuptools import setup
-except ImportError
+except ImportError:
     from distutils.core import setup
 
 install_requires = ['requests >= 1.2.0']
