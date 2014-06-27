@@ -30,6 +30,7 @@ Features
 * Copy keys inside/between buckets
 * Delete keys
 * Update key metadata
+* List keys in a bucket
 * Simple way to set key as public or setting Cache-Control and Content-Type headers.
 * Pool implementation for fast multi-threaded actions
 
@@ -186,6 +187,16 @@ Deleting keys
 # Deleting keys is simple
 conn.delete('key.jpg','my_bucket')
 
+```
+
+Listing keys
+------------
+tinys3 will try to use lxml if it's available, otherwise it will fallback to xml python module
+(slower and not secure against maliciously constructed data)
+```python
+# This will return an iterator over the metadata of the files starting with 'prefix' in 'my_bucket'
+# The iterator will yield dicts with the following keys: key, etag, size, last_modified, storage_class
+conn.list('prefix', 'my_bucket')
 ```
 
 Using tinys3's Connection Pool
