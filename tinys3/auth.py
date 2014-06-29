@@ -19,10 +19,12 @@ except ImportError:
 BUCKET_VHOST_MATCH = re.compile(r'^([a-z0-9\-]+\.)?s3([a-z0-9\-]+)?\.amazonaws\.com$', flags=re.IGNORECASE)
 
 # A list of query params used by aws
-AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle', 'versionid',
-                    'response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
-                    'response-content-disposition', 'response-content-encoding', 'delete',
-                    'uploads', 'uploadId']
+AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle',
+                    'versionid', 'response-content-type',
+                    'response-content-language', 'response-expires',
+                    'response-cache-control', 'response-content-disposition',
+                    'response-content-encoding', 'delete',
+                    'uploads', 'uploadid']
 
 #acl, lifecycle, location, logging, notification, partNumber, policy, requestPayment, torrent, uploadId, uploads, versionId, versioning, versions, and website.
 class S3Auth(AuthBase):
@@ -227,7 +229,6 @@ class S3Auth(AuthBase):
             if k in AWS_QUERY_PARAMS:
                 # add it to our result list
                 r.append(i)
-
         # If we have result, convert them to query string
         if r:
             return '?' + '&'.join(r)

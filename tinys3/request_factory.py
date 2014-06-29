@@ -209,7 +209,6 @@ class InitiateMultipartUploadRequest(S3Request):
                  extra_headers=None):
         super(InitiateMultipartUploadRequest, self).__init__(conn)
         self.key = key
-        print key, bucket, ' key buck'
         self.bucket = bucket
         self.expires = expires
         self.content_type = content_type
@@ -237,6 +236,44 @@ class InitiateMultipartUploadRequest(S3Request):
                                 headers=headers,
                                 auth=self.auth)
         r.raise_for_status()
+        return r
+
+
+class AbortMultipartUploadRequest(S3Request):
+
+    def __init__(self, conn, key, bucket, uploadId, expires=None,
+                 content_type=None, public=True, extra_headers=None):
+        super(AbortMultipartUploadRequest, self).__init__(conn)
+        self.key = key
+        self.bucket = bucket
+        self.uploadId = uploadId
+        self.expires = expires
+        self.content_type = content_type
+        self.public = public
+        self.extra_headers = extra_headers
+
+
+    def run(self):
+        url = self.bucket_url(self.key, self.bucket)
+        url += "?uploadId=" + self.uploadId
+        headers = {}
+        # calc the expires headers
+        if self.expires:
+            headers['Cache-Control'] = self._calc_cache_control()
+        # calc the content type
+        headers['Content-Type'] = (self.content_type or
+        mimetypes.guess_type(self.key)[0] or 'application/octet-stream')
+        # if public - set public headers
+        if self.public:
+            headers['x-amz-acl'] = 'public-read'
+        # update headers with extra headers
+        if self.extra_headers:
+            headers.update(self.extra_headers)
+        # call requests with all the params
+        r = self.adapter().delete(url,
+                                headers=headers,
+                                auth=self.auth)
+        #r.raise_for_status()
         return r
 
 

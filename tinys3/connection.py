@@ -156,8 +156,8 @@ class Base(object):
         """Returns a "boto-ish" MultipartUpload object that works kind of
         the same way than the Boto one."""
         return MultipartUpload(self, bucket, key)
-
-   
+ 
+  
     def copy(self, from_key, from_bucket, to_key, to_bucket=None, metadata=None, public=True):
         """
         Copy a key contents to another key/bucket with an option to update metadata/public state
