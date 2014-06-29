@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .auth import S3Auth
-from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest, ListRequest
+from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest, ListRequest, InitiateMultipartUploadRequest
 
 
 class Base(object):
@@ -151,6 +151,17 @@ class Base(object):
 
         return self.run(r)
 
+
+    def initiate_multipart_upload(self, key, bucket=None, content_type=None, expires=None,
+                                  public=True, extra_headers=None):
+        b = self.bucket(bucket)
+        r = InitiateMultipartUploadRequest(self, key, b, expires, content_type,
+                          public, extra_headers)
+
+        return self.run(r)
+        
+ 
+   
     def copy(self, from_key, from_bucket, to_key, to_bucket=None, metadata=None, public=True):
         """
         Copy a key contents to another key/bucket with an option to update metadata/public state

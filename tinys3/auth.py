@@ -21,9 +21,10 @@ BUCKET_VHOST_MATCH = re.compile(r'^([a-z0-9\-]+\.)?s3([a-z0-9\-]+)?\.amazonaws\.
 # A list of query params used by aws
 AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle', 'versionid',
                     'response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
-                    'response-content-disposition', 'response-content-encoding', 'delete']
+                    'response-content-disposition', 'response-content-encoding', 'delete',
+                    'uploads']
 
-
+#acl, lifecycle, location, logging, notification, partNumber, policy, requestPayment, torrent, uploadId, uploads, versionId, versioning, versions, and website.
 class S3Auth(AuthBase):
     """
     S3 Custom Authenticator class for requests
@@ -197,10 +198,10 @@ class S3Auth(AuthBase):
             else:
                 # It's a virtual host, add it to the result
                 r += ('/' + host)
-
+        
+        
         # Add the path string
         r += parts.path or '/'
-
         # add the special query strings
         r += self._get_subresource(parts.query)
 
@@ -222,7 +223,6 @@ class S3Auth(AuthBase):
             # get the key
             item = i.split('=')
             k = item[0].lower()
-
             # If it's one the special params
             if k in AWS_QUERY_PARAMS:
                 # add it to our result list
@@ -231,7 +231,6 @@ class S3Auth(AuthBase):
         # If we have result, convert them to query string
         if r:
             return '?' + '&'.join(r)
-
         return ''
 
     def _get_date(self):

@@ -53,7 +53,6 @@ class GetRequest(S3Request):
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
         r = self.adapter().get(url, auth=self.auth)
-
         r.raise_for_status()
 
         return r
@@ -109,9 +108,6 @@ class UploadRequest(S3Request):
     def __init__(self, conn, key, local_file, bucket, expires=None, content_type=None, public=True, extra_headers=None,
                  close=False, rewind=True):
         """
-
-
-
         :param conn:
         :param key:
         :param local_file:
@@ -199,11 +195,49 @@ class UploadRequest(S3Request):
 
         return "max-age=%d" % self._get_total_seconds(expires) + ', public' if self.public else ''
 
+
     def _get_total_seconds(self, timedelta):
         """
         Support for getting the total seconds from a time delta (Required for python 2.6 support)
         """
         return timedelta.days * 24 * 60 * 60 + timedelta.seconds
+
+
+class InitiateMultipartUploadRequest(S3Request):
+
+    def __init__(self, conn, key, bucket, expires=None, content_type=None, public=True,
+                 extra_headers=None):
+        super(InitiateMultipartUploadRequest, self).__init__(conn)
+        self.key = key
+        print key, bucket, ' key buck'
+        self.bucket = bucket
+        self.expires = expires
+        self.content_type = content_type
+        self.public = public
+        self.extra_headers = extra_headers
+
+
+    def run(self):
+        url = self.bucket_url(self.key, self.bucket) + "?uploads"
+        headers = {}
+        # calc the expires headers
+        if self.expires:
+            headers['Cache-Control'] = self._calc_cache_control()
+        # calc the content type
+        headers['Content-Type'] = (self.content_type or
+        mimetypes.guess_type(self.key)[0] or 'application/octet-stream')
+        # if public - set public headers
+        if self.public:
+            headers['x-amz-acl'] = 'public-read'
+        # update headers with extra headers
+        if self.extra_headers:
+            headers.update(self.extra_headers)
+        # call requests with all the params
+        r = self.adapter().post(url,
+                                headers=headers,
+                                auth=self.auth)
+        r.raise_for_status()
+        return r
 
 
 class DeleteRequest(S3Request):
