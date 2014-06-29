@@ -22,7 +22,7 @@ BUCKET_VHOST_MATCH = re.compile(r'^([a-z0-9\-]+\.)?s3([a-z0-9\-]+)?\.amazonaws\.
 AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle', 'versionid',
                     'response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
                     'response-content-disposition', 'response-content-encoding', 'delete',
-                    'uploads']
+                    'uploads', 'uploadId']
 
 #acl, lifecycle, location, logging, notification, partNumber, policy, requestPayment, torrent, uploadId, uploads, versionId, versioning, versions, and website.
 class S3Auth(AuthBase):

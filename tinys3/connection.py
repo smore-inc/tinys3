@@ -2,7 +2,7 @@
 
 from .auth import S3Auth
 from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest, ListRequest, InitiateMultipartUploadRequest
-
+from .multipart_upload import MultipartUpload
 
 class Base(object):
     """
@@ -152,15 +152,11 @@ class Base(object):
         return self.run(r)
 
 
-    def initiate_multipart_upload(self, key, bucket=None, content_type=None, expires=None,
-                                  public=True, extra_headers=None):
-        b = self.bucket(bucket)
-        r = InitiateMultipartUploadRequest(self, key, b, expires, content_type,
-                          public, extra_headers)
+    def initiate_multipart_upload(self, key, bucket=None):
+        """Returns a "boto-ish" MultipartUpload object that works kind of
+        the same way than the Boto one."""
+        return MultipartUpload(self, bucket, key)
 
-        return self.run(r)
-        
- 
    
     def copy(self, from_key, from_bucket, to_key, to_bucket=None, metadata=None, public=True):
         """
