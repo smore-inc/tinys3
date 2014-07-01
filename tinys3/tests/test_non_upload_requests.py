@@ -59,7 +59,7 @@ class TestNonUploadRequests(unittest.TestCase):
         mock = self._mock_adapter(r)
 
         mock.should_receive('delete').with_args('https://s3.amazonaws.com/bucket/key_to_delete',
-                                                auth=self.conn.auth).and_return(self._mock_response())
+                                                auth=self.conn.auth).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -73,7 +73,7 @@ class TestNonUploadRequests(unittest.TestCase):
         mock = self._mock_adapter(r)
 
         mock.should_receive('get').with_args('https://s3.amazonaws.com/bucket/key_to_get',
-                                             auth=self.conn.auth).and_return(self._mock_response())
+                                             auth=self.conn.auth).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -98,7 +98,7 @@ class TestNonUploadRequests(unittest.TestCase):
             'https://s3.amazonaws.com/bucket/key_to_update',
             headers=expected_headers,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -120,7 +120,7 @@ class TestNonUploadRequests(unittest.TestCase):
             'https://s3.amazonaws.com/to_bucket/to_key',
             headers=expected_headers,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 

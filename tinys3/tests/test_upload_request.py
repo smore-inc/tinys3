@@ -49,7 +49,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -83,7 +83,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -102,7 +102,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -128,7 +128,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -148,7 +148,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -169,7 +169,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -194,7 +194,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -218,7 +218,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -247,7 +247,7 @@ class TestUploadRequest(unittest.TestCase):
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
-        ).and_return(self._mock_response())
+        ).and_return(self._mock_response()).once()
 
         r.run()
 

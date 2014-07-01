@@ -77,7 +77,7 @@ class TestPool(unittest.TestCase):
 
         pool = Pool(TEST_ACCESS_KEY, TEST_SECRET_KEY)
 
-        flexmock(pool).should_receive('close')
+        flexmock(pool).should_receive('close').once()
 
         with pool as p:
             # do nothing
