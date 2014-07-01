@@ -234,11 +234,13 @@ class S3Auth(AuthBase):
             return '?' + '&'.join(r)
         return ''
 
+
     def _get_date(self):
         """
         Returns a string for the current date
         """
         return datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+
 
     def _fix_content_length(self, request):
         """
@@ -251,6 +253,7 @@ class S3Auth(AuthBase):
 
         if request.method == 'PUT' and not 'Content-Length' in request.headers:
             request.headers['Content-Length'] = '0'
+
 
     def __call__(self, r):
         """

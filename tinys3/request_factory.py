@@ -23,15 +23,31 @@ mimetypes.init([])
 
 
 class S3Request(object):
-    def __init__(self, conn):
+    def __init__(self, conn, query_params=None):
         self.auth = conn.auth
         self.tls = conn.tls
         self.endpoint = conn.endpoint
+        self.query_params = query_params
 
     def bucket_url(self, key, bucket):
         protocol = 'https' if self.tls else 'http'
-        
-        return "%s://%s.%s/%s" % (protocol, bucket, self.endpoint, key.lstrip('/'))
+        url = "{}://{}.{}/{}".format(protocol, bucket, self.endpoint, key.lstrip('/'))
+        # If params have been specified, add them to URL in the format :
+        # url?param1&param2=value, etc.
+        if self.query_params is not None:
+            first = True
+            for (param, value) in self.query_params.items():
+                if first is True:
+                    url += "?"
+                    first = False
+                else:
+                    url += "&"
+                url += param
+                # Some parameters (e.g. subresource descriptors) have no value
+                if value is not None:
+                    url += "={}".format(value)
+        print 'used URL:', url
+        return url
 
     def run(self):
         raise NotImplementedError()
@@ -45,8 +61,8 @@ class S3Request(object):
 
 
 class GetRequest(S3Request):
-    def __init__(self, conn, key, bucket):
-        super(GetRequest, self).__init__(conn)
+    def __init__(self, conn, key, bucket, query_params=None):
+        super(GetRequest, self).__init__(conn, query_params)
         self.key = key
         self.bucket = bucket
 
@@ -102,6 +118,34 @@ class ListRequest(S3Request):
             more = root.find(k('IsTruncated')).text == 'true'
             if more:
                 marker = p['key']
+
+
+class PostRequest(S3Request):
+    def __init__(self, conn, key, bucket, query_params=None):
+        super(PostRequest, self).__init__(conn, query_params)
+        self.key = key
+        self.bucket = bucket
+
+    def run(self):
+        url = self.bucket_url(self.key, self.bucket)
+        r = self.adapter().post(url, auth=self.auth)
+        r.raise_for_status()
+
+        return r
+
+
+class DeleteRequest(S3Request):
+    def __init__(self, conn, key, bucket, query_params=None):
+        super(DeleteRequest, self).__init__(conn, query_params)
+        self.key = key
+        self.bucket = bucket
+
+    def run(self):
+        url = self.bucket_url(self.key, self.bucket)
+        r = self.adapter().delete(url, auth=self.auth)
+        r.raise_for_status()
+
+        return r
 
 
 class UploadRequest(S3Request):
@@ -201,95 +245,6 @@ class UploadRequest(S3Request):
         Support for getting the total seconds from a time delta (Required for python 2.6 support)
         """
         return timedelta.days * 24 * 60 * 60 + timedelta.seconds
-
-
-class InitiateMultipartUploadRequest(S3Request):
-
-    def __init__(self, conn, key, bucket, expires=None, content_type=None, public=True,
-                 extra_headers=None):
-        super(InitiateMultipartUploadRequest, self).__init__(conn)
-        self.key = key
-        self.bucket = bucket
-        self.expires = expires
-        self.content_type = content_type
-        self.public = public
-        self.extra_headers = extra_headers
-
-
-    def run(self):
-        url = self.bucket_url(self.key, self.bucket) + "?uploads"
-        headers = {}
-        # calc the expires headers
-        if self.expires:
-            headers['Cache-Control'] = self._calc_cache_control()
-        # calc the content type
-        headers['Content-Type'] = (self.content_type or
-        mimetypes.guess_type(self.key)[0] or 'application/octet-stream')
-        # if public - set public headers
-        if self.public:
-            headers['x-amz-acl'] = 'public-read'
-        # update headers with extra headers
-        if self.extra_headers:
-            headers.update(self.extra_headers)
-        # call requests with all the params
-        r = self.adapter().post(url,
-                                headers=headers,
-                                auth=self.auth)
-        r.raise_for_status()
-        return r
-
-
-class AbortMultipartUploadRequest(S3Request):
-
-    def __init__(self, conn, key, bucket, uploadId, expires=None,
-                 content_type=None, public=True, extra_headers=None):
-        super(AbortMultipartUploadRequest, self).__init__(conn)
-        self.key = key
-        self.bucket = bucket
-        self.uploadId = uploadId
-        self.expires = expires
-        self.content_type = content_type
-        self.public = public
-        self.extra_headers = extra_headers
-
-
-    def run(self):
-        url = self.bucket_url(self.key, self.bucket)
-        url += "?uploadId=" + self.uploadId
-        headers = {}
-        # calc the expires headers
-        if self.expires:
-            headers['Cache-Control'] = self._calc_cache_control()
-        # calc the content type
-        headers['Content-Type'] = (self.content_type or
-        mimetypes.guess_type(self.key)[0] or 'application/octet-stream')
-        # if public - set public headers
-        if self.public:
-            headers['x-amz-acl'] = 'public-read'
-        # update headers with extra headers
-        if self.extra_headers:
-            headers.update(self.extra_headers)
-        # call requests with all the params
-        r = self.adapter().delete(url,
-                                headers=headers,
-                                auth=self.auth)
-        #r.raise_for_status()
-        return r
-
-
-class DeleteRequest(S3Request):
-    def __init__(self, conn, key, bucket):
-        super(DeleteRequest, self).__init__(conn)
-        self.key = key
-        self.bucket = bucket
-
-    def run(self):
-        url = self.bucket_url(self.key, self.bucket)
-        r = self.adapter().delete(url, auth=self.auth)
-
-        r.raise_for_status()
-
-        return r
 
 
 class CopyRequest(S3Request):

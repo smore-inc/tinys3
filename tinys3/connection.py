@@ -152,10 +152,16 @@ class Base(object):
         return self.run(r)
 
 
+    def list_multipart_uploads(self, bucket=None):
+        rep = self.get()
+        
+
     def initiate_multipart_upload(self, key, bucket=None):
         """Returns a "boto-ish" MultipartUpload object that works kind of
         the same way than the Boto one."""
-        return MultipartUpload(self, bucket, key)
+        mp = MultipartUpload(self, bucket, key)
+        mp.initiate()
+        return mp
  
   
     def copy(self, from_key, from_bucket, to_key, to_bucket=None, metadata=None, public=True):
