@@ -19,6 +19,7 @@ setup(name='tinys3',
       author_email='shlomi@smore.com',
       url='https://www.smore.com/labs/tinys3/',
       packages=['tinys3'],
+      license='MIT', 
 
       classifiers=[
           # make sure to use :: Python *and* :: Python :: 3 so
