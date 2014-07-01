@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
-from datetime import timedelta
-import mimetypes
 import unittest
 from flexmock import flexmock
 from tinys3.request_factory import CopyRequest, S3Request, UpdateMetadataRequest, DeleteRequest, GetRequest
 from tinys3 import Connection
-
-TEST_AUTH = ("TEST_ACCESS_KEY", "TEST_SECRET_KEY")
 
 
 class TestNonUploadRequests(unittest.TestCase):

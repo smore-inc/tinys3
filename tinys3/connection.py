@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .auth import S3Auth
-from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest
+from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest, ListRequest
 
 
 class Base(object):
@@ -69,6 +69,33 @@ class Base(object):
 
         """
         r = GetRequest(self, key, self.bucket(bucket))
+
+        return self.run(r)
+
+    def list(self, prefix='', bucket=None):
+        """
+        List files
+
+        Params:
+            - prefix        (Optional) List only files starting with this prefix (default to the empty string)
+
+            - bucket        (Optional) The name of the bucket to use (can be skipped if setting the default_bucket)
+                            option for the connection
+
+        Returns:
+            - An iterator over the files, each file being represented by a dict object with the following keys:
+                - etag
+                - key
+                - last_modified
+                - size
+                - storage_class
+
+        Usage:
+
+        >>> conn.list('rep/','sample_bucket')
+
+        """
+        r = ListRequest(self, prefix, self.bucket(bucket))
 
         return self.run(r)
 

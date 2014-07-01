@@ -9,7 +9,7 @@ Generates Request objects for various S3 requests
 
 """
 
-from datetime import timedelta
+import datetime
 import mimetypes
 import os
 import requests
@@ -57,6 +57,52 @@ class GetRequest(S3Request):
         r.raise_for_status()
 
         return r
+
+
+class ListRequest(S3Request):
+    def __init__(self, conn, prefix, bucket):
+        super(ListRequest, self).__init__(conn)
+        self.prefix = prefix
+        self.bucket = bucket
+
+    def run(self):
+        return iter(self)
+
+    def __iter__(self):
+        marker = ''
+        more = True
+        url = self.bucket_url('', self.bucket)
+        k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
+
+        try:
+            import lxml.etree as ET
+        except ImportError:
+            import xml.etree.ElementTree as ET
+
+        while more:
+            resp = self.adapter().get(url, auth=self.auth, params={
+                'prefix': self.prefix,
+                'marker': marker,
+            })
+            resp.raise_for_status()
+
+            root = ET.fromstring(resp.content)
+            for tag in root.findall(k('Contents')):
+                p = {
+                    'key': tag.find(k('Key')).text,
+                    'size': int(tag.find(k('Size')).text),
+                    'last_modified': datetime.datetime.strptime(
+                        tag.find(k('LastModified')).text,
+                        '%Y-%m-%dT%H:%M:%S.%fZ',
+                    ),
+                    'etag': tag.find(k('ETag')).text[1:-1],
+                    'storage_class': tag.find(k('StorageClass')).text,
+                }
+                yield p
+
+            more = root.find(k('IsTruncated')).text == 'true'
+            if more:
+                marker = p['key']
 
 
 class UploadRequest(S3Request):
@@ -145,9 +191,9 @@ class UploadRequest(S3Request):
         expires = self.expires
         # Handle content expiration
         if expires == 'max':
-            expires = timedelta(seconds=31536000)
+            expires = datetime.timedelta(seconds=31536000)
         elif isinstance(expires, int):
-            expires = timedelta(seconds=expires)
+            expires = datetime.timedelta(seconds=expires)
         else:
             expires = expires
 
