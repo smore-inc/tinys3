@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from HTMLParser import HTMLParser
+
 from .auth import S3Auth
 from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest, ListRequest, InitiateMultipartUploadRequest
 from .multipart_upload import MultipartUpload
@@ -153,8 +155,28 @@ class Base(object):
 
 
     def list_multipart_uploads(self, bucket=None):
-        rep = self.get()
-        
+        headers = {'key-marker': '',
+                   'upload-id-marker': ''}
+        more_results = True
+        mp = None
+        # GET /?uploads
+        req = GetRequest(self, '', self.bucket(bucket),
+                         headers=headers,
+                         query_params={'uploads': None})
+        rep = self.run(req)
+        parser = self.UploadIdParser()
+        parser.feed(rep.text)
+        multipart_uploads = []
+        # To mimic boto's performance, this should somehow be replaced by a
+        # generator-based approach (yielding one upload at a time). See
+        # https://github.com/boto/boto/blob/develop/boto/s3/
+        # bucketlistresultset.py#L109
+        for mp_data in parser.uploads:
+            mp = MultipartUpload(self, parser.data['bucket'], mp_data['key'])
+            mp.uploadId = mp_data['uploadid']
+            multipart_uploads.append(mp)
+        return multipart_uploads
+            
 
     def initiate_multipart_upload(self, key, bucket=None):
         """Returns a "boto-ish" MultipartUpload object that works kind of
@@ -256,6 +278,64 @@ class Connection(Base):
     """
     The basic implementation of an S3 connection.
     """
+
+    class UploadIdParser(HTMLParser):
+        """An internal HTML parser to parse server responses.
+        This shouldn't be of any use outside of the class."""
+        
+        def __init__(self):
+            HTMLParser.__init__(self)
+            self.data = {}
+            self.uploads = []
+            self.currentTag = None
+            self.inUpload = False
+
+
+        def handle_starttag(self, tag, attrs):
+            self.currentTag = tag
+            # When listing multipart uploads, information about multipart
+            # upload is enclosed in <Upload> tags. We have to keep trace of it.
+            # NB: The parser automatically lowercases all tags.
+            if tag == 'upload':
+                self.inUpload = True
+                # Informations about the current upload in case the parser is used
+                # to list multipart uploads
+                self.currentUpload = {}
+
+
+        def handle_endtag(self, tag):
+            self.currentTag = None
+            if tag == 'upload':
+                self.inUpload = False
+                self.uploads.append(self.currentUpload)
+                self.currentUpload = {}
+
+
+        def handle_data(self, data):
+            try:
+                # If that's data related to a multipart upload, store it in
+                # uploads
+                if self.inUpload:
+                    self.currentUpload[self.currentTag] = data
+                else:
+                    self.data[self.currentTag] = data
+            except KeyError:
+                # As Amazon answers XML, the parser calls an empty handle_data
+                # before 'real' HTML parsing. But nothing to worry about.
+                pass
+
+
+        def upload_id(self):
+            return self.data['uploadid']
+
+        
+        def key(self):
+            return self.data['key']
+
+        
+        def bucket(self):
+            return self.data['bucket']
+
 
     def _handle_request(self, request):
         """

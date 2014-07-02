@@ -1,4 +1,3 @@
-from HTMLParser import HTMLParser
 from .request_factory import PostRequest, DeleteRequest
 
 class MultipartUpload:
@@ -9,47 +8,7 @@ class MultipartUpload:
     - a parts number indicating how much parts we already sent on that upload
     It uses a custom basic HTTP parser in order to retrieve the upload ID from
     the HTTP response upon initialization.
-    Inspired by the boto implementation."""
-
-    class UploadIdParser(HTMLParser):
-        """An internal HTML parser to parse server responses.
-        This shouldn't be of any use outside of the class."""
-        
-        def __init__(self):
-            HTMLParser.__init__(self)
-            self.data = {}
-            self.currentTag = None
-
-
-        def handle_starttag(self, tag, attrs):
-            self.currentTag = tag
-
-
-        def handle_endtag(self, tag):
-            self.currentTag = None
-
-
-        def handle_data(self, data):
-            try:
-                # Stored tag names are all lowercase
-                self.data[self.currentTag] = data
-            except KeyError:
-                # As Amazon answers XML, the parser calls an empty handle_data
-                # before 'real' HTML parsing. But nothing to worry about.
-                pass
-
-            
-        def upload_id(self):
-            return self.data['uploadid']
-
-        
-        def key(self):
-            return self.data['key']
-
-        
-        def bucket(self):
-            return self.data['bucket']
-        
+    Inspired by the boto implementation."""        
 
     def __init__(self, conn, bucket, key):
         self.conn = conn
@@ -66,7 +25,7 @@ class MultipartUpload:
         req = PostRequest(self.conn, self.key, self.bucket,
                           query_params={"uploads": None})
         resp = self.conn.run(req)
-        parser = self.UploadIdParser()
+        parser = self.conn.UploadIdParser()
         parser.feed(resp.text)
         self.uploadId = parser.upload_id()
 

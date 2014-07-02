@@ -46,7 +46,6 @@ class S3Request(object):
                 # Some parameters (e.g. subresource descriptors) have no value
                 if value is not None:
                     url += "={}".format(value)
-        print 'used URL:', url
         return url
 
     def run(self):
@@ -61,14 +60,15 @@ class S3Request(object):
 
 
 class GetRequest(S3Request):
-    def __init__(self, conn, key, bucket, query_params=None):
+    def __init__(self, conn, key, bucket, headers=None, query_params=None):
         super(GetRequest, self).__init__(conn, query_params)
         self.key = key
         self.bucket = bucket
+        self.headers = headers
 
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
-        r = self.adapter().get(url, auth=self.auth)
+        r = self.adapter().get(url, auth=self.auth, headers=self.headers)
         r.raise_for_status()
 
         return r
