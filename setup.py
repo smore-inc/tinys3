@@ -11,7 +11,7 @@ if sys.version_info < (3, 2):
     install_requires.insert(0, 'futures >= 2.1.3')
 
 setup(name='tinys3',
-      version='0.1.9',
+      version='0.1.11',
       description=("A small library for uploading files to S3,"
                    "With support of async uploads, worker pools, cache headers etc"),
 
