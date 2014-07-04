@@ -24,7 +24,7 @@ AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle',
                     'response-content-language', 'response-expires',
                     'response-cache-control', 'response-content-disposition',
                     'response-content-encoding', 'delete',
-                    'uploads', 'uploadid']
+                    'uploads', 'uploadid', 'partnumber']
 
 #acl, lifecycle, location, logging, notification, partNumber, policy, requestPayment, torrent, uploadId, uploads, versionId, versioning, versions, and website.
 class S3Auth(AuthBase):

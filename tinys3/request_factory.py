@@ -29,6 +29,7 @@ class S3Request(object):
         self.endpoint = conn.endpoint
         self.query_params = query_params
 
+
     def bucket_url(self, key, bucket):
         protocol = 'https' if self.tls else 'http'
         url = "{}://{}.{}/{}".format(protocol, bucket, self.endpoint, key.lstrip('/'))
@@ -48,8 +49,10 @@ class S3Request(object):
                     url += "={}".format(value)
         return url
 
+
     def run(self):
         raise NotImplementedError()
+
 
     def adapter(self):
         """
@@ -149,8 +152,9 @@ class DeleteRequest(S3Request):
 
 
 class UploadRequest(S3Request):
-    def __init__(self, conn, key, local_file, bucket, expires=None, content_type=None, public=True, extra_headers=None,
-                 close=False, rewind=True):
+    def __init__(self, conn, key, local_file, bucket, expires=None,
+                 content_type=None, public=True, extra_headers=None,
+                 close=False, rewind=True, query_params=None):
         """
         :param conn:
         :param key:
@@ -163,7 +167,7 @@ class UploadRequest(S3Request):
         :param close:
         :param rewind:
         """
-        super(UploadRequest, self).__init__(conn)
+        super(UploadRequest, self).__init__(conn, query_params)
 
         self.key = key
         self.fp = local_file
@@ -217,7 +221,7 @@ class UploadRequest(S3Request):
                                    headers=headers,
                                    auth=self.auth)
 
-            r.raise_for_status()
+#            r.raise_for_status()
 
         finally:
             # if close is set, try to close the fp like object (also, use finally to ensure the close)
@@ -245,6 +249,41 @@ class UploadRequest(S3Request):
         Support for getting the total seconds from a time delta (Required for python 2.6 support)
         """
         return timedelta.days * 24 * 60 * 60 + timedelta.seconds
+
+
+class UploadPartRequest(S3Request):
+    def __init__(self, conn, key, bucket, fp, extra_headers=None, query_params=None,
+                 close=False, rewind=True):
+
+        super(UploadPartRequest, self).__init__(conn, query_params)
+        self.key = key
+        self.bucket = bucket
+        self.fp = fp
+        self.headers = extra_headers
+        self.close = close
+        self.rewind = rewind
+
+
+    def run(self):
+        # if rewind - rewind the fp like object
+        if self.rewind and hasattr(self.fp, 'seek'):
+            self.fp.seek(0, os.SEEK_SET)
+        try:
+            data = self.fp
+            # call requests with all the params
+            r = self.adapter().put(self.bucket_url(self.key, self.bucket),
+                                   data=data,
+                                   headers=self.headers,
+                                   auth=self.auth)
+
+            r.raise_for_status()
+
+        finally:
+            # if close is set, try to close the fp like object (also, use finally to ensure the close)
+            if self.close and hasattr(self.fp, 'close'):
+                self.fp.close()
+
+        return r
 
 
 class CopyRequest(S3Request):
