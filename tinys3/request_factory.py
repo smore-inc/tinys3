@@ -69,11 +69,11 @@ class GetRequest(S3Request):
         self.bucket = bucket
         self.headers = headers
 
+
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
         r = self.adapter().get(url, auth=self.auth, headers=self.headers)
         r.raise_for_status()
-
         return r
 
 
@@ -124,16 +124,20 @@ class ListRequest(S3Request):
 
 
 class PostRequest(S3Request):
-    def __init__(self, conn, key, bucket, query_params=None):
+    def __init__(self, conn, key, bucket, query_params=None, data=None):
         super(PostRequest, self).__init__(conn, query_params)
         self.key = key
         self.bucket = bucket
+        self.data = data
 
-    def run(self):
+
+    def run(self, data=None):
         url = self.bucket_url(self.key, self.bucket)
-        r = self.adapter().post(url, auth=self.auth)
+        if self.data is None:
+            r = self.adapter().post(url, auth=self.auth)
+        else:
+            r = self.adapter().post(url, auth=self.auth, data=self.data)
         r.raise_for_status()
-
         return r
 
 
@@ -143,11 +147,11 @@ class DeleteRequest(S3Request):
         self.key = key
         self.bucket = bucket
 
+
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
         r = self.adapter().delete(url, auth=self.auth)
         r.raise_for_status()
-
         return r
 
 
@@ -168,7 +172,6 @@ class UploadRequest(S3Request):
         :param rewind:
         """
         super(UploadRequest, self).__init__(conn, query_params)
-
         self.key = key
         self.fp = local_file
         self.bucket = bucket
@@ -179,29 +182,23 @@ class UploadRequest(S3Request):
         self.close = close
         self.rewind = rewind
 
+
     def run(self):
-
         headers = {}
-
         # calc the expires headers
         if self.expires:
             headers['Cache-Control'] = self._calc_cache_control()
-
         # calc the content type
         headers['Content-Type'] = self.content_type or mimetypes.guess_type(self.key)[0] or 'application/octet-stream'
-
         # if public - set public headers
         if self.public:
             headers['x-amz-acl'] = 'public-read'
-
         # if rewind - rewind the fp like object
         if self.rewind and hasattr(self.fp, 'seek'):
             self.fp.seek(0, os.SEEK_SET)
-
         # update headers with extra headers
         if self.extra_headers:
             headers.update(self.extra_headers)
-
         try:
             # Wrap our file pointer with a LenWrapperStream.
             # We do it because requests will try to fallback to chuncked transfer if
@@ -214,24 +211,20 @@ class UploadRequest(S3Request):
             # TODO - add some tests for that
             # shlomiatar @ 08/04/13
             data = LenWrapperStream(self.fp)
-
             # call requests with all the params
             r = self.adapter().put(self.bucket_url(self.key, self.bucket),
                                    data=data,
                                    headers=headers,
                                    auth=self.auth)
-
-#            r.raise_for_status()
-
+            r.raise_for_status()
         finally:
             # if close is set, try to close the fp like object (also, use finally to ensure the close)
             if self.close and hasattr(self.fp, 'close'):
                 self.fp.close()
-
         return r
 
-    def _calc_cache_control(self):
 
+    def _calc_cache_control(self):
         expires = self.expires
         # Handle content expiration
         if expires == 'max':
@@ -240,7 +233,6 @@ class UploadRequest(S3Request):
             expires = datetime.timedelta(seconds=expires)
         else:
             expires = expires
-
         return "max-age=%d" % self._get_total_seconds(expires) + ', public' if self.public else ''
 
 
@@ -252,9 +244,9 @@ class UploadRequest(S3Request):
 
 
 class UploadPartRequest(S3Request):
+
     def __init__(self, conn, key, bucket, fp, extra_headers=None, query_params=None,
                  close=False, rewind=True):
-
         super(UploadPartRequest, self).__init__(conn, query_params)
         self.key = key
         self.bucket = bucket
@@ -275,19 +267,18 @@ class UploadPartRequest(S3Request):
                                    data=data,
                                    headers=self.headers,
                                    auth=self.auth)
-
             r.raise_for_status()
-
         finally:
             # if close is set, try to close the fp like object (also, use finally to ensure the close)
             if self.close and hasattr(self.fp, 'close'):
                 self.fp.close()
-
         return r
 
 
 class CopyRequest(S3Request):
-    def __init__(self, conn, from_key, from_bucket, to_key, to_bucket, metadata=None, public=True):
+
+    def __init__(self, conn, from_key, from_bucket, to_key, to_bucket,
+                 metadata=None, public=True):
         super(CopyRequest, self).__init__(conn)
         self.from_key = from_key.lstrip('/')
         self.from_bucket = from_bucket
@@ -296,22 +287,18 @@ class CopyRequest(S3Request):
         self.metadata = metadata
         self.public = public
 
-    def run(self):
 
+    def run(self):
         headers = {
             'x-amz-copy-source': "/%s/%s" % (self.from_bucket, self.from_key),
             'x-amz-metadata-directive': 'COPY' if not self.metadata else 'REPLACE'
         }
-
         if self.public:
             headers['x-amz-acl'] = 'public-read'
-
         if self.metadata:
             headers.update(self.metadata)
-
         r = self.adapter().put(self.bucket_url(self.to_key, self.to_bucket), auth=self.auth, headers=headers)
         r.raise_for_status()
-
         return r
 
 

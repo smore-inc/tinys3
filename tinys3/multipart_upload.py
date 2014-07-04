@@ -1,4 +1,5 @@
-from .request_factory import PostRequest, DeleteRequest, UploadPartRequest
+import collections  # For OrderedDict
+from .request_factory import GetRequest, PostRequest, DeleteRequest, UploadPartRequest
 
 class MultipartUpload:
     """An Amazon S3 multipart upload object to be used in an tinys3 environment.
@@ -39,10 +40,24 @@ class MultipartUpload:
         """Method to finish a multipart upload after having uploaded parts.
         This needs to send a POST with each recorded ETag for each part sent by
         the server as response when they were uploaded."""
+        # We need to pass some HTML in the POST request data body.
+        # It includes all the ETags headers sent by the server responses when
+        # parts were uploaded
+        # we need parts in order so use an OrderedDict
+        parts = collections.OrderedDict(sorted(self.etags.items()))
+        data = "<CompleteMultipartUpload>"
+        for (partNumber, etag) in parts.items():
+            data += "<Part>"
+            data += "<PartNumber>{}</PartNumber>".format(partNumber)
+            data += "<ETag>{}</ETag>".format(etag)
+            data += "</Part>"
+        data += "</CompleteMultipartUpload>"
         req = PostRequest(self.conn, self.key, self.bucket,
-                          query_params={"uploadId": self.uploadId})
-        
-        
+                          query_params={"uploadId": self.uploadId}, data=data)
+        resp = self.conn.run(req)
+        return resp
+
+
     def cancel_upload(self):
         """Call this method to abort the multipart upload"""
         req = DeleteRequest(self.conn, self.key, self.bucket,
@@ -68,6 +83,28 @@ class MultipartUpload:
                                           'uploadId': self.uploadId})
         rep = self.conn.run(req)
         self.etags[self.partsNbr] = rep.headers['etag']
-        self.partsNbr += 1       
+        self.partsNbr += 1
         return rep
-        
+
+
+    def list_parts(self, extra_params=None):
+        """The following extra params can be used to list parts:
+        - encoding-type: use 'url' to encode the response.
+        - max-parts: Sets the maximum number of parts to return in the response
+                     body. Default: 1,000
+        - part-number-marker: Specifies the part after which listing should
+                              begin. Only parts with higher part numbers will
+                              be listed."""
+
+        params = {"uploadId": self.uploadId}
+        if extra_params is not None:
+            params.update(extra_params)
+        # GET /ObjectName?uploadId=UploadId
+        # TODO manage istruncated
+        req = GetRequest(self.conn, self.key, self.bucket,
+                          query_params=params)
+        resp = self.conn.run(req)
+        parser = self.conn.UploadIdParser()
+        parser.feed(resp.text)
+        parts = parser.parts
+        return parts

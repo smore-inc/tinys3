@@ -31,6 +31,7 @@ class Base(object):
         self.tls = tls
         self.endpoint = endpoint
 
+
     def bucket(self, bucket):
         """
         Verifies that we have a bucket for a request
@@ -45,12 +46,11 @@ class Base(object):
             ValueError if no bucket was provided AND no default bucket was defined.
         """
         b = bucket or self.default_bucket
-
         # If we don't have a bucket, raise an exception
         if not b:
             raise ValueError("You must specify a bucket in your request or set the default_bucket for the connection")
-
         return b
+
 
     def get(self, key, bucket=None):
         """
@@ -71,7 +71,6 @@ class Base(object):
 
         """
         r = GetRequest(self, key, self.bucket(bucket))
-
         return self.run(r)
 
     def list(self, prefix='', bucket=None):
@@ -150,7 +149,6 @@ class Base(object):
         """
         r = UploadRequest(self, key, local_file, self.bucket(bucket), expires=expires, content_type=content_type,
                           public=public, extra_headers=headers, rewind=rewind, close=close)
-
         return self.run(r)
 
 
@@ -176,7 +174,7 @@ class Base(object):
             mp.uploadId = mp_data['uploadid']
             multipart_uploads.append(mp)
         return multipart_uploads
-            
+
 
     def initiate_multipart_upload(self, key, bucket=None):
         """Returns a "boto-ish" MultipartUpload object that works kind of
@@ -184,8 +182,8 @@ class Base(object):
         mp = MultipartUpload(self, bucket, key)
         mp.initiate()
         return mp
- 
-  
+
+
     def copy(self, from_key, from_bucket, to_key, to_bucket=None, metadata=None, public=True):
         """
         Copy a key contents to another key/bucket with an option to update metadata/public state
@@ -235,6 +233,7 @@ class Base(object):
 
         return self.run(r)
 
+
     def delete(self, key, bucket=None):
         """
         Delete a key from a bucket
@@ -254,8 +253,8 @@ class Base(object):
 
         """
         r = DeleteRequest(self, key, self.bucket(bucket))
-
         return self.run(r)
+
 
     def run(self, request):
         """
@@ -266,6 +265,7 @@ class Base(object):
 
         """
         return self._handle_request(request)
+
 
     def _handle_request(self, request):
         """
@@ -286,9 +286,13 @@ class Connection(Base):
         def __init__(self):
             HTMLParser.__init__(self)
             self.data = {}
-            self.uploads = []
+            self.uploads = []  # For list_multipart_uploads
+            self.currentUpload = {}
+            self.parts = []  # For MultipartUpload.list_parts
+            self.currentPart = {}
             self.currentTag = None
             self.inUpload = False
+            self.inPart = False
 
 
         def handle_starttag(self, tag, attrs):
@@ -301,6 +305,9 @@ class Connection(Base):
                 # Informations about the current upload in case the parser is used
                 # to list multipart uploads
                 self.currentUpload = {}
+            elif tag == 'part':
+                self.inPart = True
+                self.currentPart = {}
 
 
         def handle_endtag(self, tag):
@@ -309,6 +316,10 @@ class Connection(Base):
                 self.inUpload = False
                 self.uploads.append(self.currentUpload)
                 self.currentUpload = {}
+            elif tag == 'part':
+                self.inPart = False
+                self.parts.append(self.currentPart)
+                self.currentPart = {}                
 
 
         def handle_data(self, data):
@@ -317,6 +328,8 @@ class Connection(Base):
                 # uploads
                 if self.inUpload:
                     self.currentUpload[self.currentTag] = data
+                elif self.inPart:
+                    self.currentPart[self.currentTag] = data
                 else:
                     self.data[self.currentTag] = data
             except KeyError:
@@ -328,11 +341,11 @@ class Connection(Base):
         def upload_id(self):
             return self.data['uploadid']
 
-        
+
         def key(self):
             return self.data['key']
 
-        
+
         def bucket(self):
             return self.data['bucket']
 
