@@ -99,12 +99,30 @@ class MultipartUpload:
         params = {"uploadId": self.uploadId}
         if extra_params is not None:
             params.update(extra_params)
-        # GET /ObjectName?uploadId=UploadId
-        # TODO manage istruncated
-        req = GetRequest(self.conn, self.key, self.bucket,
-                          query_params=params)
-        resp = self.conn.run(req)
-        parser = self.conn.UploadIdParser()
-        parser.feed(resp.text)
-        parts = parser.parts
-        return parts
+        more_parts = True
+        while more_parts:
+            # GET /ObjectName?uploadId=UploadId&params
+            req = GetRequest(self.conn, self.key, self.bucket,
+                             query_params=params)
+            resp = self.conn.run(req)
+            parser = self.conn.UploadIdParser()
+            parser.feed(resp.text)
+            for part in parser.parts:
+                yield Part(part)
+            if parser.data['istruncated'] == 'true':
+                params['part-number-marker'] = parser.data['nextpartnumbermarker']
+            else:
+                more_parts = False
+
+
+class Part:
+    """A part of a multipart upload.
+    Attributes:
+    - partnumber - The integer part number
+    - lastmodified - The last modified date of this part
+    - etag - The MD5 hash of this part
+    - size - The size, in bytes, of this part
+    """
+    def __init__(self, data_dict):
+        for key in data_dict:
+            setattr(self, key, data_dict[key])

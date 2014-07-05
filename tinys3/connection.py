@@ -152,28 +152,48 @@ class Base(object):
         return self.run(r)
 
 
-    def list_multipart_uploads(self, bucket=None):
+    def list_multipart_uploads(self, bucket=None, extra_params=None):
+        """Lists all existing multipart uploads on the connection's bucket
+        (or the given one). The following params can be used :
+        - prefix: only list uploads for the keys that begin with the specified
+                  prefix.
+        - delimiter: All keys that contain the same string between the prefix,
+                     if specified, and the first occurrence of the delimiter
+                     after the prefix are grouped under a single result
+                     element.
+        - encoding-type: Use 'url' ton encode the response.
+        - max-uploads: Sets the maximum number of multipart uploads,
+                       from 1 to 1,000, to return in the response body.
+                       1,000 is the maximum number of uploads that can be
+                       returned in a response (default 1,000).
+        - key-marker: Together with upload-id-marker, this parameter specifies
+                      the multipart upload after which listing should begin.
+        - upload-id-marker: Together with key-marker, specifies the multipart
+                            upload after which listing should begin.
+        """
         headers = {'key-marker': '',
                    'upload-id-marker': ''}
+        params = {'uploads': None}
+        if extra_params is not None:
+            params.update(extra_params)
         more_results = True
-        mp = None
-        # GET /?uploads
-        req = GetRequest(self, '', self.bucket(bucket),
-                         headers=headers,
-                         query_params={'uploads': None})
-        rep = self.run(req)
-        parser = self.UploadIdParser()
-        parser.feed(rep.text)
-        multipart_uploads = []
-        # To mimic boto's performance, this should somehow be replaced by a
-        # generator-based approach (yielding one upload at a time). See
-        # https://github.com/boto/boto/blob/develop/boto/s3/
-        # bucketlistresultset.py#L109
-        for mp_data in parser.uploads:
-            mp = MultipartUpload(self, parser.data['bucket'], mp_data['key'])
-            mp.uploadId = mp_data['uploadid']
-            multipart_uploads.append(mp)
-        return multipart_uploads
+        while more_results:
+            # GET /?uploads&params
+            req = GetRequest(self, '', self.bucket(bucket),
+                             headers=headers,
+                             query_params=params)
+            rep = self.run(req)
+            parser = self.UploadIdParser()
+            parser.feed(rep.text)
+            for upload in parser.uploads:
+                mp = MultipartUpload(self, parser.data['bucket'], upload['key'])
+                mp.uploadId = upload['uploadid']
+                yield mp
+            if parser.data['istruncated'] == 'true':
+                params['key-marker'] = parser.data['nextkeymarker']
+                params['upload-id-marker'] = parser.data['nextuploadidmarker']
+            else:
+                more_results = False
 
 
     def initiate_multipart_upload(self, key, bucket=None):
