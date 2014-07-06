@@ -53,7 +53,7 @@ class Base(object):
         return b
 
 
-    def get(self, key, bucket=None):
+    def get(self, key, bucket=None, headers=None):
         """
         Get a key from a bucket
 
@@ -62,6 +62,7 @@ class Base(object):
 
             - bucket        (Optional) The name of the bucket to use (can be skipped if setting the default_bucket)
                             option for the connection
+            - headers       (Optional) Additional headers of the request
 
         Returns:
             - A response object from the requests lib or a future that wraps that response object if used with a pool.
@@ -71,7 +72,7 @@ class Base(object):
         >>> conn.get('my_awesome_key.zip','sample_bucket')
 
         """
-        r = GetRequest(self, key, self.bucket(bucket))
+        r = GetRequest(self, key, self.bucket(bucket), headers=headers)
         return self.run(r)
 
     def list(self, prefix='', bucket=None):
