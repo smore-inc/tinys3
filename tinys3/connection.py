@@ -5,6 +5,7 @@ from HTMLParser import HTMLParser
 from .auth import S3Auth
 from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest, ListRequest, InitiateMultipartUploadRequest
 from .multipart_upload import MultipartUpload
+from .key import Key
 
 class Base(object):
     """
@@ -147,61 +148,11 @@ class Base(object):
         There are more usage examples in the readme file.
 
         """
-        r = UploadRequest(self, key, local_file, self.bucket(bucket), expires=expires, content_type=content_type,
-                          public=public, extra_headers=headers, rewind=rewind, close=close)
+        r = UploadRequest(self, key, local_file, self.bucket(bucket),
+                          expires=expires, content_type=content_type,
+                          public=public, extra_headers=headers, rewind=rewind,
+                          close=close)
         return self.run(r)
-
-
-    def list_multipart_uploads(self, bucket=None, extra_params=None):
-        """Lists all existing multipart uploads on the connection's bucket
-        (or the given one). The following params can be used :
-        - prefix: only list uploads for the keys that begin with the specified
-                  prefix.
-        - delimiter: All keys that contain the same string between the prefix,
-                     if specified, and the first occurrence of the delimiter
-                     after the prefix are grouped under a single result
-                     element.
-        - encoding-type: Use 'url' ton encode the response.
-        - max-uploads: Sets the maximum number of multipart uploads,
-                       from 1 to 1,000, to return in the response body.
-                       1,000 is the maximum number of uploads that can be
-                       returned in a response (default 1,000).
-        - key-marker: Together with upload-id-marker, this parameter specifies
-                      the multipart upload after which listing should begin.
-        - upload-id-marker: Together with key-marker, specifies the multipart
-                            upload after which listing should begin.
-        """
-        headers = {'key-marker': '',
-                   'upload-id-marker': ''}
-        params = {'uploads': None}
-        if extra_params is not None:
-            params.update(extra_params)
-        more_results = True
-        while more_results:
-            # GET /?uploads&params
-            req = GetRequest(self, '', self.bucket(bucket),
-                             headers=headers,
-                             query_params=params)
-            rep = self.run(req)
-            parser = self.UploadIdParser()
-            parser.feed(rep.text)
-            for upload in parser.uploads:
-                mp = MultipartUpload(self, parser.data['bucket'], upload['key'])
-                mp.uploadId = upload['uploadid']
-                yield mp
-            if parser.data['istruncated'] == 'true':
-                params['key-marker'] = parser.data['nextkeymarker']
-                params['upload-id-marker'] = parser.data['nextuploadidmarker']
-            else:
-                more_results = False
-
-
-    def initiate_multipart_upload(self, key, bucket=None):
-        """Returns a "boto-ish" MultipartUpload object that works kind of
-        the same way than the Boto one."""
-        mp = MultipartUpload(self, bucket, key)
-        mp.initiate()
-        return mp
 
 
     def copy(self, from_key, from_bucket, to_key, to_bucket=None, metadata=None, public=True):
@@ -227,10 +178,9 @@ class Base(object):
         There are more usage examples in the readme file.
         """
         to_bucket = self.bucket(to_bucket or from_bucket)
-
         r = CopyRequest(self, from_key, from_bucket, to_key, to_bucket, metadata=metadata, public=public)
-
         return self.run(r)
+
 
     def update_metadata(self, key, metadata=None, bucket=None, public=True):
         """
@@ -286,6 +236,92 @@ class Base(object):
         """
         return self._handle_request(request)
 
+    
+    def list_keys(self, bucket=None, extra_params=None):
+        """Generator to list all existing keys on the connection's bucket
+        (or the given one). The following params can be used :
+        - prefix: only list keys whose name begins with the specified
+                  prefix.
+        - delimiter: All keys that contain the same string between the prefix,
+                     if specified, and the first occurrence of the delimiter
+                     after the prefix are grouped under a single result
+                     element, CommonPrefixes.
+        - encoding-type: Use 'url' ton encode the response.
+        - max-keys: Sets the maximum number of keys,
+                    from 1 to 1,000, to return in the response body.
+                    1,000 is the maximum number of keys that can be
+                    returned in a response (default 1,000).
+        - marker: Specifies the key to start with when listing objects in a
+                  bucket. Amazon S3 lists objects in alphabetical order. 
+        """
+        params = {}
+        if extra_params is not None:
+            params.update(extra_params)
+        more_results = True
+        while more_results:
+            # GET /params
+            req = GetRequest(self, '', self.bucket(bucket),
+                             query_params=params)
+            rep = self.run(req)
+            parser = self.UploadIdParser()
+            parser.feed(rep.text)
+            for key_dict in parser.keys:
+                key = Key(parser.data['name'], key_dict)
+                yield key
+            if parser.data['istruncated'] == 'true':
+                params['marker'] = parser.keys[-1]['key']
+            else:
+                more_results = False
+
+
+    def list_multipart_uploads(self, bucket=None, extra_params=None):
+        """Generator to list all existing multipart uploads on the connection's
+        bucket (or the given one). The following params can be used :
+        - prefix: only list uploads for the keys that begin with the specified
+                  prefix.
+        - delimiter: All keys that contain the same string between the prefix,
+                     if specified, and the first occurrence of the delimiter
+                     after the prefix are grouped under a single result
+                     element.
+        - encoding-type: Use 'url' ton encode the response.
+        - max-uploads: Sets the maximum number of multipart uploads,
+                       from 1 to 1,000, to return in the response body.
+                       1,000 is the maximum number of uploads that can be
+                       returned in a response (default 1,000).
+        - key-marker: Together with upload-id-marker, this parameter specifies
+                      the multipart upload after which listing should begin.
+        - upload-id-marker: Together with key-marker, specifies the multipart
+                            upload after which listing should begin.
+        """
+        params = {'uploads': None}
+        if extra_params is not None:
+            params.update(extra_params)
+        more_results = True
+        while more_results:
+            # GET /?uploads&params
+            req = GetRequest(self, '', self.bucket(bucket),
+                             query_params=params)
+            rep = self.run(req)
+            parser = self.UploadIdParser()
+            parser.feed(rep.text)
+            for upload in parser.uploads:
+                mp = MultipartUpload(self, parser.data['bucket'], upload['key'])
+                mp.uploadId = upload['uploadid']
+                yield mp
+            if parser.data['istruncated'] == 'true':
+                params['key-marker'] = parser.data['nextkeymarker']
+                params['upload-id-marker'] = parser.data['nextuploadidmarker']
+            else:
+                more_results = False
+
+
+    def initiate_multipart_upload(self, key, bucket=None):
+        """Returns a "boto-ish" MultipartUpload object that works kind of
+        the same way than the Boto one."""
+        mp = MultipartUpload(self, bucket, key)
+        mp.initiate()
+        return mp
+
 
     def _handle_request(self, request):
         """
@@ -305,14 +341,21 @@ class Connection(Base):
         
         def __init__(self):
             HTMLParser.__init__(self)
-            self.data = {}
-            self.uploads = []  # For list_multipart_uploads
-            self.currentUpload = {}
-            self.parts = []  # For MultipartUpload.list_parts
-            self.currentPart = {}
             self.currentTag = None
+            # All parsed data goes in that dict by default
+            self.data = {}
+            # For list_multipart_uploads
+            self.uploads = []
+            self.currentUpload = {}
             self.inUpload = False
+            # For MultipartUpload.list_parts
+            self.parts = []
+            self.currentPart = {}
             self.inPart = False
+            # For list_keys
+            self.keys = []
+            self.currentKey = {}
+            self.inKey = False
 
 
         def handle_starttag(self, tag, attrs):
@@ -322,12 +365,13 @@ class Connection(Base):
             # NB: The parser automatically lowercases all tags.
             if tag == 'upload':
                 self.inUpload = True
-                # Informations about the current upload in case the parser is used
-                # to list multipart uploads
                 self.currentUpload = {}
             elif tag == 'part':
                 self.inPart = True
                 self.currentPart = {}
+            elif tag == 'contents':  # contents means a new key
+                self.inKey = True
+                self.currentKey = {}
 
 
         def handle_endtag(self, tag):
@@ -340,21 +384,26 @@ class Connection(Base):
                 self.inPart = False
                 self.parts.append(self.currentPart)
                 self.currentPart = {}                
+            elif tag == 'contents':
+                self.inKey = False
+                self.keys.append(self.currentKey)
+                self.currentKey = {}
 
 
         def handle_data(self, data):
             try:
-                # If that's data related to a multipart upload, store it in
-                # uploads
                 if self.inUpload:
                     self.currentUpload[self.currentTag] = data
                 elif self.inPart:
                     self.currentPart[self.currentTag] = data
+                elif self.inKey:
+                    self.currentKey[self.currentTag] = data
                 else:
                     self.data[self.currentTag] = data
             except KeyError:
-                # As Amazon answers XML, the parser calls an empty handle_data
-                # before 'real' HTML parsing. But nothing to worry about.
+                # As Amazon answers XML, the parser may call an empty
+                # handle_data before 'real' HTML parsing
+                # (self.currentTag still None). But it's harmless
                 pass
 
 

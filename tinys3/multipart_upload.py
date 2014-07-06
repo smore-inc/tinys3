@@ -1,4 +1,3 @@
-import collections  # For OrderedDict
 from .request_factory import GetRequest, PostRequest, DeleteRequest, UploadPartRequest
 
 class MultipartUpload:
@@ -16,12 +15,6 @@ class MultipartUpload:
         self.bucket = self.conn.bucket(bucket)
         self.key = key
         self.uploadId = ''
-        self.partsNbr = 1  # Amazon s3 parts numbers begin from 1.
-        # we need to keep track of the returned etag for each uploaded part as
-        # we need to send them to the server when completing the upload.
-        # See http://docs.aws.amazon.com/AmazonS3/latest/API/
-        # mpUploadComplete.html
-        self.etags = {}
 
 
     def initiate(self):
@@ -36,36 +29,7 @@ class MultipartUpload:
         self.uploadId = parser.upload_id()
 
 
-    def complete_upload(self):
-        """Method to finish a multipart upload after having uploaded parts.
-        This needs to send a POST with each recorded ETag for each part sent by
-        the server as response when they were uploaded."""
-        # We need to pass some HTML in the POST request data body.
-        # It includes all the ETags headers sent by the server responses when
-        # parts were uploaded
-        # we need parts in order so use an OrderedDict
-        parts = collections.OrderedDict(sorted(self.etags.items()))
-        data = "<CompleteMultipartUpload>"
-        for (partNumber, etag) in parts.items():
-            data += "<Part>"
-            data += "<PartNumber>{}</PartNumber>".format(partNumber)
-            data += "<ETag>{}</ETag>".format(etag)
-            data += "</Part>"
-        data += "</CompleteMultipartUpload>"
-        req = PostRequest(self.conn, self.key, self.bucket,
-                          query_params={"uploadId": self.uploadId}, data=data)
-        resp = self.conn.run(req)
-        return resp
-
-
-    def cancel_upload(self):
-        """Call this method to abort the multipart upload"""
-        req = DeleteRequest(self.conn, self.key, self.bucket,
-                            query_params={'uploadId': self.uploadId})
-        return self.conn.run(req)
-
-
-    def upload_part_from_file(self, fp, headers=None):
+    def upload_part_from_file(self, fp, part_num, headers=None):
         """
         The available headers for this request are :
         - Content-Length: The size of the part, in bytes.
@@ -77,25 +41,55 @@ class MultipartUpload:
         See http://docs.aws.amazon.com/AmazonS3/latest/API/
             mpUploadUploadPart.html
         """
+        # PUT /ObjectName?partNumber=PartNumber&uploadId=UploadId
         req = UploadPartRequest(self.conn, self.key, self.bucket, fp,
-                            extra_headers=headers,
-                            query_params={'partNumber': self.partsNbr,
-                                          'uploadId': self.uploadId})
+                                extra_headers=headers,
+                                query_params={'partNumber': part_num,
+                                              'uploadId': self.uploadId})
         rep = self.conn.run(req)
-        self.etags[self.partsNbr] = rep.headers['etag']
-        self.partsNbr += 1
         return rep
 
 
+    def complete_upload(self):
+        """Method to finish a multipart upload after having uploaded parts.
+        This needs to send a POST with each recorded ETag for each part sent by
+        the server as response when they were uploaded.
+        See http://docs.aws.amazon.com/AmazonS3/latest/API/
+        mpUploadComplete.html"""
+        # We need to pass some HTML in the POST request data body.
+        # It includes all the ETags headers sent by the server responses when
+        # parts were uploaded, in order
+        data = "<CompleteMultipartUpload>"
+        for part in self.list_parts():
+            data += "<Part>"
+            data += "<PartNumber>{}</PartNumber>".format(part.partnumber)
+            data += "<ETag>{}</ETag>".format(part.etag)
+            data += "</Part>"
+        data += "</CompleteMultipartUpload>"
+        # POST /ObjectName?uploadId=UploadId
+        req = PostRequest(self.conn, self.key, self.bucket,
+                          query_params={"uploadId": self.uploadId}, data=data)
+        resp = self.conn.run(req)
+        return resp
+
+
+    def cancel_upload(self):
+        """Call this method to abort the multipart upload"""
+        # DELETE /ObjectName?uploadId=UploadId
+        req = DeleteRequest(self.conn, self.key, self.bucket,
+                            query_params={'uploadId': self.uploadId})
+        return self.conn.run(req)
+
+
     def list_parts(self, extra_params=None):
-        """The following extra params can be used to list parts:
+        """Generator to obtain all uploaded parts of this multipart upload.
+        The following extra params can be used:
         - encoding-type: use 'url' to encode the response.
         - max-parts: Sets the maximum number of parts to return in the response
-                     body. Default: 1,000
+                     body. Default: 1,000 (Integer)
         - part-number-marker: Specifies the part after which listing should
                               begin. Only parts with higher part numbers will
-                              be listed."""
-
+                              be listed. (String)"""
         params = {"uploadId": self.uploadId}
         if extra_params is not None:
             params.update(extra_params)
@@ -109,10 +103,18 @@ class MultipartUpload:
             parser.feed(resp.text)
             for part in parser.parts:
                 yield Part(part)
-            if parser.data['istruncated'] == 'true':
-                params['part-number-marker'] = parser.data['nextpartnumbermarker']
+            if parser.data['istruncated'] == 'true':  # more to come
+                next_marker = parser.data['nextpartnumbermarker']
+                params['part-number-marker'] = next_marker
             else:
                 more_parts = False
+
+
+    def number_of_parts(self):
+        """Get the number of already uploaded parts.
+        Useful when one is interested only in that number, but not the parts
+        contents in itself."""
+        return len([part for part in self.list_parts()])
 
 
 class Part:
@@ -121,8 +123,7 @@ class Part:
     - partnumber - The integer part number
     - lastmodified - The last modified date of this part
     - etag - The MD5 hash of this part
-    - size - The size, in bytes, of this part
-    """
+    - size - The size, in bytes, of this part"""
     def __init__(self, data_dict):
         for key in data_dict:
             setattr(self, key, data_dict[key])
