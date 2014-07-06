@@ -315,6 +315,12 @@ class Base(object):
             else:
                 more_results = False
 
+                
+    def get_all_multipart_uploads(self, bucket=None, extra_params=None):
+        """The non-generator version of list_multipart_uploads."""
+        mps = [mp for mp in self.list_multipart_uploads(bucket, extra_params)]
+        return mps
+
 
     def initiate_multipart_upload(self, key, bucket=None):
         """Returns a "boto-ish" MultipartUpload object that works kind of
