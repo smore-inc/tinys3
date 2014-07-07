@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from HTMLParser import HTMLParser
+import sys
+# Python 2/3 compatibility
+if sys.version_info.major == 2:
+    from HTMLParser import HTMLParser
+elif sys.version_info.major == 3:
+    from html.parser import HTMLParser
 
 from .auth import S3Auth
 from .request_factory import UploadRequest, UpdateMetadataRequest, CopyRequest, DeleteRequest, GetRequest, ListRequest, InitiateMultipartUploadRequest
