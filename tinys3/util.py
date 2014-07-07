@@ -9,9 +9,9 @@ class LenWrapperStream(object):
      We do it because requests will try to fallback to chuncked transfer if
      it can't extract the len attribute of the object it gets, and S3 doesn't
      support chuncked transfer.
-     In some cases, like cStringIO, it may cause some issues, so we wrap the stream
-     with a class of our own, that will proxy the stream and provide a proper
-     len attribute
+     In some cases, like cStringIO, it may cause some issues, so we wrap the
+     stream with a class of our own, that will proxy the stream and provide a
+     proper len attribute
     """
 
     def __init__(self, stream):
@@ -67,9 +67,9 @@ class LenWrapperStream(object):
             try:
                 return os.fstat(o.fileno()).st_size
             except IOError:
-                pass  # fallback to the manual way, this is useful when using something like BytesIO
-
-
+                # fallback to the manual way, this is useful when using
+                # something like BytesIO
+                pass
         # calculate based on bytes to end of content
         # get our start position
         start_pos = o.tell()
@@ -84,7 +84,8 @@ class LenWrapperStream(object):
 
     def __eq__(self, other):
         """
-        Make sure equal method works as expected (comparing the underlying stream and not the wrapper)
+        Make sure equal method works as expected (comparing the underlying
+        stream and not the wrapper)
         """
         if self.stream == other:
             return True

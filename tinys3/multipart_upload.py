@@ -1,4 +1,6 @@
-from .request_factory import GetRequest, PostRequest, DeleteRequest, UploadPartRequest
+from .request_factory import GetRequest, PostRequest, DeleteRequest
+from .request_factory import UploadPartRequest  # PEP 8
+
 
 class MultipartUpload:
     """An Amazon S3 multipart upload object to be used in an tinys3 environment.
@@ -8,14 +10,13 @@ class MultipartUpload:
     - a parts number indicating how much parts we already sent on that upload
     It uses a custom basic HTTP parser in order to retrieve the upload ID from
     the HTTP response upon initialization.
-    Inspired by the boto implementation."""        
+    Inspired by the boto implementation."""
 
     def __init__(self, conn, bucket, key):
         self.conn = conn
         self.bucket = self.conn.bucket(bucket)
         self.key = key
         self.uploadId = ''
-
 
     def initiate(self):
         """A kind of advanced method to send the initiate
@@ -27,7 +28,6 @@ class MultipartUpload:
         parser = self.conn.UploadIdParser()
         parser.feed(resp.text)
         self.uploadId = parser.upload_id()
-
 
     def upload_part_from_file(self, fp, part_num, headers=None):
         """
@@ -48,7 +48,6 @@ class MultipartUpload:
                                               'uploadId': self.uploadId})
         rep = self.conn.run(req)
         return rep
-
 
     def complete_upload(self):
         """Method to finish a multipart upload after having uploaded parts.
@@ -72,14 +71,12 @@ class MultipartUpload:
         resp = self.conn.run(req)
         return resp
 
-
     def cancel_upload(self):
         """Call this method to abort the multipart upload"""
         # DELETE /ObjectName?uploadId=UploadId
         req = DeleteRequest(self.conn, self.key, self.bucket,
                             query_params={'uploadId': self.uploadId})
         return self.conn.run(req)
-
 
     def list_parts(self, extra_params=None):
         """Generator to obtain all uploaded parts of this multipart upload.
@@ -108,7 +105,6 @@ class MultipartUpload:
                 params['part-number-marker'] = next_marker
             else:
                 more_parts = False
-
 
     def number_of_parts(self):
         """Get the number of already uploaded parts.
