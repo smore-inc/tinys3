@@ -24,7 +24,7 @@ AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle',
                     'response-content-language', 'response-expires',
                     'response-cache-control', 'response-content-disposition',
                     'response-content-encoding', 'delete',
-                    'uploads', 'uploadid', 'partnumber']
+                    'uploads', 'partnumber', 'uploadid']
 
 
 class S3Auth(AuthBase):
@@ -228,8 +228,9 @@ class S3Auth(AuthBase):
         """
         r = []
 
-        # Split the querystring
-        keys = qs.split('&')
+        # Split the query string
+        # and order the keys lexicographically
+        keys = sorted(qs.split('&'))
         # for each item
         for i in keys:
             # get the key

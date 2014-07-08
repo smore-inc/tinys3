@@ -285,6 +285,10 @@ class Base(object):
         r = HeadRequest(self, self.bucket(bucket))
         return self.run(r)
 
+    def head_object(self, key, bucket=None, headers=None):
+        r = HeadRequest(self, self.bucket(bucket), key)
+        return self.run(r)
+
     def list_keys(self, bucket=None, extra_params=None):
         """Generator to list all existing keys on the connection's bucket
         (or the given one). The following params can be used :

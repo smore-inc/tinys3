@@ -152,13 +152,15 @@ class DeleteRequest(S3Request):
 
 
 class HeadRequest(S3Request):
-    def __init__(self, conn, bucket):
+    def __init__(self, conn, bucket, key='', headers=None):
         super(HeadRequest, self).__init__(conn)
+        self.key = key
         self.bucket = bucket
+        self.headers = headers
 
     def run(self):
-        url = self.bucket_url('', self.bucket)
-        r = self.adapter().head(url, auth=self.auth)
+        url = self.bucket_url(self.key, self.bucket)
+        r = self.adapter().head(url, auth=self.auth, headers=self.headers)
         r.raise_for_status()
         return r
 
