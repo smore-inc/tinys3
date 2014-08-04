@@ -22,6 +22,7 @@ from .util import LenWrapperStream
 # mimetypes-guess-type-broken-in-windows-on-py2-7-and-python-3-x
 mimetypes.init([])
 
+XML_PARSE_STRING = "{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}"
 
 class S3Request(object):
     def __init__(self, conn, params=None):
@@ -90,7 +91,7 @@ class ListRequest(S3Request):
     def __iter__(self):
         more = True
         url = self.bucket_url('', self.bucket)
-        k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
+        k = XML_PARSE_STRING.format
 
         try:
             import lxml.etree as ET
@@ -143,7 +144,7 @@ class ListMultipartUploadRequest(S3Request):
     def __iter__(self):
         more = True
         url = self.bucket_url('', self.bucket)
-        k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
+        k = XML_PARSE_STRING.format
 
         try:
             import lxml.etree as ET
@@ -191,7 +192,7 @@ class ListPartsRequest(S3Request):
     def __iter__(self):
         more = True
         url = self.bucket_url(self.key, self.bucket)
-        k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
+        k = XML_PARSE_STRING.format
 
         try:
             import lxml.etree as ET
@@ -229,7 +230,7 @@ class InitiateMultipartUploadRequest(S3Request):
 
     def run(self, data=None):
         url = self.bucket_url(self.key, self.bucket)
-        k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
+        k = XML_PARSE_STRING.format
         try:
             import lxml.etree as ET
         except ImportError:
