@@ -416,10 +416,7 @@ class CompleteUploadRequest(S3Request):
         # POST /ObjectName?uploadId=UploadId
         url = self.bucket_url(self.mp_upload.key, self.mp_upload.bucket)
         r = self.adapter().post(url, auth=self.auth, data=data)
-        try:
-            r.raise_for_status()
-        except Exception as e:
-            print e
+        r.raise_for_status()
         return r
 
 
