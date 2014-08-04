@@ -24,11 +24,11 @@ mimetypes.init([])
 
 
 class S3Request(object):
-    def __init__(self, conn, query_params=None):
+    def __init__(self, conn, params=None):
         self.auth = conn.auth
         self.tls = conn.tls
         self.endpoint = conn.endpoint
-        self.query_params = query_params
+        self.params = params
 
     def bucket_url(self, key, bucket):
         protocol = 'https' if self.tls else 'http'
@@ -36,9 +36,9 @@ class S3Request(object):
                                      key.lstrip('/'))
         # If params have been specified, add them to URL in the format :
         # url?param1&param2=value, etc.
-        if self.query_params is not None:
+        if self.params is not None:
             first = True
-            for (param, value) in self.query_params.items():
+            for (param, value) in self.params.items():
                 if first is True:
                     url += "?"
                     first = False
@@ -76,16 +76,18 @@ class GetRequest(S3Request):
 
 
 class ListRequest(S3Request):
-    def __init__(self, conn, prefix, bucket):
+    def __init__(self, conn, prefix, bucket, max_keys, encoding, marker):
         super(ListRequest, self).__init__(conn)
         self.prefix = prefix
         self.bucket = bucket
+        self.max_keys = max_keys
+        self.encoding = encoding
+        self.marker = marker
 
     def run(self):
         return iter(self)
 
     def __iter__(self):
-        marker = ''
         more = True
         url = self.bucket_url('', self.bucket)
         k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
@@ -97,11 +99,12 @@ class ListRequest(S3Request):
 
         while more:
             resp = self.adapter().get(url, auth=self.auth, params={
-                'prefix': self.prefix,
-                'marker': marker,
+                'encoding-type': self.encoding,
+                'marker': self.marker,
+                'max-keys': self.max_keys,
+                'prefix': self.prefix
             })
             resp.raise_for_status()
-
             root = ET.fromstring(resp.content)
             for tag in root.findall(k('Contents')):
                 p = {
@@ -118,24 +121,124 @@ class ListRequest(S3Request):
 
             more = root.find(k('IsTruncated')).text == 'true'
             if more:
-                marker = p['key']
+                self.marker = p['key']
 
 
-class PostRequest(S3Request):
-    def __init__(self, conn, key, bucket, query_params=None, data=None):
-        super(PostRequest, self).__init__(conn, query_params)
+class ListMultipartUploadRequest(S3Request):
+    def __init__(self, conn, prefix, bucket, max_uploads, encoding, key_marker,
+                 upload_id_marker):
+        params = {'uploads': None}
+        super(ListMultipartUploadRequest, self).__init__(conn, params)
+        self.conn = conn
+        self.prefix = prefix
+        self.bucket = bucket
+        self.max_uploads = max_uploads
+        self.encoding = encoding
+        self.key_marker = key_marker
+        self.upload_id_marker = upload_id_marker
+
+    def run(self):
+        return iter(self)
+
+    def __iter__(self):
+        more = True
+        url = self.bucket_url('', self.bucket)
+        k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
+
+        try:
+            import lxml.etree as ET
+        except ImportError:
+            import xml.etree.ElementTree as ET
+        from .multipart_upload import MultipartUpload
+
+        while more:
+            resp = self.adapter().get(url, auth=self.auth, params={
+                'encoding-type': self.encoding,
+                'max-uploads': self.max_uploads,
+                'key-marker': self.key_marker,
+                'prefix': self.prefix,
+                'upload-id-marker': self.upload_id_marker
+            })
+            resp.raise_for_status()
+            root = ET.fromstring(resp.content)
+            for tag in root.findall(k('Upload')):
+                mp = MultipartUpload(self.conn, self.bucket,
+                                     tag.find(k('Key')).text)
+                mp.uploadId = tag.find(k('UploadId')).text
+                yield mp
+
+            more = root.find(k('IsTruncated')).text == 'true'
+            if more:
+                self.key_marker = root.find(k('NextKeyMarker')).text
+                self.upload_id_marker = root.find(k('NextUploadIdMarker')).text
+
+
+class ListPartsRequest(S3Request):
+    def __init__(self, conn, key, bucket, upload_id, max_parts,
+                 encoding, part_number_marker):
+        params = {'uploadId': upload_id}
+        super(ListPartsRequest, self).__init__(conn, params)
         self.key = key
         self.bucket = bucket
-        self.data = data
+        self.encoding = encoding
+        self.upload_id = upload_id
+        self.max_parts = max_parts
+        self.part_number_marker = part_number_marker
+
+    def run(self):
+        return iter(self)
+
+    def __iter__(self):
+        more = True
+        url = self.bucket_url(self.key, self.bucket)
+        k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
+
+        try:
+            import lxml.etree as ET
+        except ImportError:
+            import xml.etree.ElementTree as ET
+        while more:
+            resp = self.adapter().get(url, auth=self.auth, params={
+                'encoding-type': self.encoding,
+                'max-parts': self.max_parts,
+                'part-number-marker': self.part_number_marker
+            })
+            resp.raise_for_status()
+            root = ET.fromstring(resp.content)
+            for tag in root.findall(k('Part')):
+                part = {
+                    'part_number': tag.find(k('PartNumber')).text,
+                    'last_modified': tag.find(k('LastModified')).text,
+                    'etag': tag.find(k('ETag')).text,
+                    'size': tag.find(k('Size')).text
+                }
+                yield part
+
+            more = root.find(k('IsTruncated')).text == 'true'
+            if more:
+                self.part_number_marker = root.find(
+                    k('NextPartNumberMarker')).text
+
+
+class InitiateMultipartUploadRequest(S3Request):
+    def __init__(self, conn, key, bucket):
+        params = {'uploads': None}
+        super(InitiateMultipartUploadRequest, self).__init__(conn, params)
+        self.key = key
+        self.bucket = bucket
 
     def run(self, data=None):
         url = self.bucket_url(self.key, self.bucket)
-        if self.data is None:
-            r = self.adapter().post(url, auth=self.auth)
-        else:
-            r = self.adapter().post(url, auth=self.auth, data=self.data)
+        k = '{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}'.format
+        try:
+            import lxml.etree as ET
+        except ImportError:
+            import xml.etree.ElementTree as ET
+
+        r = self.adapter().post(url, auth=self.auth)
         r.raise_for_status()
-        return r
+        root = ET.fromstring(r.content)
+        return root.find(k('UploadId')).text
 
 
 class DeleteRequest(S3Request):
@@ -260,13 +363,14 @@ class UploadRequest(S3Request):
 
 class UploadPartRequest(S3Request):
 
-    def __init__(self, conn, key, bucket, fp, extra_headers=None,
-                 query_params=None, close=False, rewind=True):
-        super(UploadPartRequest, self).__init__(conn, query_params)
+    def __init__(self, conn, key, bucket, fp, part_num,
+                 upload_id, close, rewind, headers=None):
+        params = {'partNumber': part_num, 'uploadId': upload_id}
+        super(UploadPartRequest, self).__init__(conn, params)
         self.key = key
         self.bucket = bucket
         self.fp = fp
-        self.headers = extra_headers
+        self.headers = headers
         self.close = close
         self.rewind = rewind
 
@@ -287,6 +391,49 @@ class UploadPartRequest(S3Request):
             # (also, use finally to ensure the close)
             if self.close and hasattr(self.fp, 'close'):
                 self.fp.close()
+        return r
+
+
+class CompleteUploadRequest(S3Request):
+
+    def __init__(self, mp_upload):
+        params = {'uploadId': mp_upload.uploadId}
+        super(CompleteUploadRequest, self).__init__(mp_upload.conn, params)
+        self.mp_upload = mp_upload
+
+    def run(self):
+        # We need to pass some HTML in the POST request data body.
+        # It includes all the ETags headers sent by the server responses when
+        # parts were uploaded, in order
+        data = "<CompleteMultipartUpload>"
+        for part in self.mp_upload.list_parts():
+            data += "<Part>"
+            data += "<PartNumber>{}</PartNumber>".format(part['part_number'])
+            data += "<ETag>{}</ETag>".format(part['etag'])
+            data += "</Part>"
+        data += "</CompleteMultipartUpload>"
+        # POST /ObjectName?uploadId=UploadId
+        url = self.bucket_url(self.mp_upload.key, self.mp_upload.bucket)
+        r = self.adapter().post(url, auth=self.auth, data=data)
+        try:
+            r.raise_for_status()
+        except Exception as e:
+            print e
+        return r
+
+
+class CancelUploadRequest(S3Request):
+
+    def __init__(self, mp_upload):
+        params = {'uploadId': mp_upload.uploadId}
+        super(CancelUploadRequest, self).__init__(mp_upload.conn, params)
+        self.mp_upload = mp_upload
+
+    def run(self):
+        # DELETE /ObjectName?uploadId=UploadId
+        url = self.bucket_url(self.mp_upload.key, self.mp_upload.bucket)
+        r = self.adapter().delete(url, auth=self.auth)
+        r.raise_for_status()
         return r
 
 
