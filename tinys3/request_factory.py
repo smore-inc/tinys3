@@ -63,8 +63,8 @@ class S3Request(object):
 
 
 class GetRequest(S3Request):
-    def __init__(self, conn, key, bucket, headers=None, query_params=None):
-        super(GetRequest, self).__init__(conn, query_params)
+    def __init__(self, conn, key, bucket, headers=None):
+        super(GetRequest, self).__init__(conn)
         self.key = key
         self.bucket = bucket
         self.headers = headers
@@ -243,8 +243,8 @@ class InitiateMultipartUploadRequest(S3Request):
 
 
 class DeleteRequest(S3Request):
-    def __init__(self, conn, key, bucket, query_params=None):
-        super(DeleteRequest, self).__init__(conn, query_params)
+    def __init__(self, conn, key, bucket):
+        super(DeleteRequest, self).__init__(conn)
         self.key = key
         self.bucket = bucket
 
@@ -272,7 +272,7 @@ class HeadRequest(S3Request):
 class UploadRequest(S3Request):
     def __init__(self, conn, key, local_file, bucket, expires=None,
                  content_type=None, public=True, extra_headers=None,
-                 close=False, rewind=True, query_params=None):
+                 close=False, rewind=True):
         """
         :param conn:
         :param key:
@@ -285,7 +285,7 @@ class UploadRequest(S3Request):
         :param close:
         :param rewind:
         """
-        super(UploadRequest, self).__init__(conn, query_params)
+        super(UploadRequest, self).__init__(conn)
         self.key = key
         self.fp = local_file
         self.bucket = bucket
