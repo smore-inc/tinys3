@@ -33,8 +33,7 @@ class S3Request(object):
 
     def bucket_url(self, key, bucket):
         protocol = 'https' if self.tls else 'http'
-        url = "{}://{}.{}/{}".format(protocol, bucket, self.endpoint,
-                                     key.lstrip('/'))
+        url = "%s://%s/%s/%s" % (protocol, self.endpoint, bucket, key.lstrip('/'))
         # If params have been specified, add them to URL in the format :
         # url?param1&param2=value, etc.
         if self.params is not None:
@@ -77,19 +76,16 @@ class GetRequest(S3Request):
 
 
 class ListRequest(S3Request):
-    def __init__(self, conn, prefix, bucket, max_keys=1000,
-                 encoding=None, marker=''):
+    def __init__(self, conn, prefix, bucket):
         super(ListRequest, self).__init__(conn)
         self.prefix = prefix
         self.bucket = bucket
-        self.max_keys = max_keys
-        self.encoding = encoding
-        self.marker = marker
 
     def run(self):
         return iter(self)
 
     def __iter__(self):
+        marker = ''
         more = True
         url = self.bucket_url('', self.bucket)
         k = XML_PARSE_STRING.format
@@ -101,10 +97,8 @@ class ListRequest(S3Request):
 
         while more:
             resp = self.adapter().get(url, auth=self.auth, params={
-                'encoding-type': self.encoding,
-                'marker': self.marker,
-                'max-keys': self.max_keys,
-                'prefix': self.prefix
+                'prefix': self.prefix,
+                'marker': marker,
             })
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
@@ -123,7 +117,7 @@ class ListRequest(S3Request):
 
             more = root.find(k('IsTruncated')).text == 'true'
             if more:
-                self.marker = p['key']
+                marker = p['key']
 
 
 class ListMultipartUploadRequest(S3Request):

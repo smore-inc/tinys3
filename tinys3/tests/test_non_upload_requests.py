@@ -73,7 +73,7 @@ class TestNonUploadRequests(unittest.TestCase):
         mock = self._mock_adapter(r)
 
         mock.should_receive('get').with_args('https://s3.amazonaws.com/bucket/key_to_get',
-                                             auth=self.conn.auth).and_return(self._mock_response()).once()
+                                             auth=self.conn.auth, headers=None).and_return(self._mock_response()).once()
 
         r.run()
 
