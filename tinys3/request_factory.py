@@ -77,7 +77,8 @@ class GetRequest(S3Request):
 
 
 class ListRequest(S3Request):
-    def __init__(self, conn, prefix, bucket, max_keys, encoding, marker):
+    def __init__(self, conn, prefix, bucket, max_keys=1000,
+                 encoding=None, marker=''):
         super(ListRequest, self).__init__(conn)
         self.prefix = prefix
         self.bucket = bucket
