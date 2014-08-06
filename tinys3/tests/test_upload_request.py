@@ -45,7 +45,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/upload_key',
+            'https://bucket.s3.amazonaws.com/upload_key',
+            # 'https://s3.amazonaws.com/bucket/upload_key',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
@@ -79,7 +80,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            #  'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            'https://bucket.s3.amazonaws.com/test_zip_key.zip',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
@@ -98,7 +100,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            # 'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            'https://bucket.s3.amazonaws.com/test_zip_key.zip',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
@@ -124,7 +127,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            'https://bucket.s3.amazonaws.com/test_zip_key.zip',
+            # 'https://s3.amazonaws.com/bucket/test_zip_key.zip',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
@@ -144,7 +148,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            # 'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            'https://bucket.s3.amazonaws.com/test_zip_key.zip',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
@@ -165,7 +170,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            # 'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            'https://bucket.s3.amazonaws.com/test_zip_key.zip',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
@@ -190,7 +196,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            # 'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            'https://bucket.s3.amazonaws.com/test_zip_key.zip',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
@@ -214,7 +221,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            # 'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            'https://bucket.s3.amazonaws.com/test_zip_key.zip',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth
@@ -243,7 +251,8 @@ class TestUploadRequest(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            # 'https://s3.amazonaws.com/bucket/test_zip_key.zip',
+            'https://bucket.s3.amazonaws.com/test_zip_key.zip',
             headers=expected_headers,
             data=self.dummy_data,
             auth=self.conn.auth

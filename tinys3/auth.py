@@ -171,8 +171,8 @@ class S3Auth(AuthBase):
         # Sort the keys and iterate through them
         for k in sorted(amz_dict.keys()):
             # add stripped key and value to the result string
-            result += "{}:{}\n".format(k.strip(),
-                                       amz_dict[k].strip().replace('\n', ' '))
+            result += "{0}:{1}\n".format(k.strip(),
+                                         amz_dict[k].strip().replace('\n', ' '))
 
         # Return the result string
         return result
@@ -281,7 +281,7 @@ class S3Auth(AuthBase):
         # Generate the string to sign
         msg = self.string_to_sign(r)
         # Sign the string and add the authorization header
-        r.headers['Authorization'] = "AWS {}:{}".format(
+        r.headers['Authorization'] = "AWS {0}:{1}".format(
             self.access_key, self.sign(msg))
 
         # Fix an issue with 0 length requests

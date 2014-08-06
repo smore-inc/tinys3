@@ -81,7 +81,7 @@ class Base(object):
         r = GetRequest(self, key, self.bucket(bucket), headers=headers)
         return self.run(r)
 
-    def list(self, prefix='', bucket=None, max_keys=1000, encoding=None, marker=''):
+    def list(self, prefix='', bucket=None):
         """
         List files
 
@@ -89,12 +89,6 @@ class Base(object):
             - prefix        (Optional) List only files starting with this prefix (default to the empty string)
 
             - bucket        (Optional) The name of the bucket to use (can be skipped if setting the default_bucket option) for the connection
-
-            - encoding:     (Optional) You can encode the response with 'url' (default to None)
-
-            - max-keys:     (Optional) Sets the maximum number of returned keys in the response (default to 1,000)
-
-            - marker:       (Optional) Specifies the key to start the listing with. (default to the empty string)
 
         Returns:
             - An iterator over the files, each file being represented by a dict object with the following keys:
@@ -110,8 +104,7 @@ class Base(object):
         >>> conn.list('rep/','sample_bucket')
 
         """
-        r = ListRequest(self, prefix, self.bucket(bucket),
-                        max_keys, encoding, marker)
+        r = ListRequest(self, prefix, self.bucket(bucket))
 
         return self.run(r)
 

@@ -33,7 +33,8 @@ class S3Request(object):
 
     def bucket_url(self, key, bucket):
         protocol = 'https' if self.tls else 'http'
-        url = "%s://%s/%s/%s" % (protocol, self.endpoint, bucket, key.lstrip('/'))
+        url = "{0}://{1}.{2}/{3}".format(protocol, bucket, self.endpoint,
+                                     key.lstrip('/'))
         # If params have been specified, add them to URL in the format :
         # url?param1&param2=value, etc.
         if self.params is not None:
@@ -114,7 +115,6 @@ class ListRequest(S3Request):
                     'storage_class': tag.find(k('StorageClass')).text,
                 }
                 yield p
-
             more = root.find(k('IsTruncated')).text == 'true'
             if more:
                 marker = p['key']
@@ -154,7 +154,7 @@ class ListMultipartUploadRequest(S3Request):
                 'key-marker': self.key_marker,
                 'prefix': self.prefix,
                 'upload-id-marker': self.upload_id_marker
-            })
+            })            
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
             for tag in root.findall(k('Upload')):
@@ -230,7 +230,6 @@ class InitiateMultipartUploadRequest(S3Request):
             import lxml.etree as ET
         except ImportError:
             import xml.etree.ElementTree as ET
-
         r = self.adapter().post(url, auth=self.auth)
         r.raise_for_status()
         root = ET.fromstring(r.content)
@@ -345,7 +344,7 @@ class UploadRequest(S3Request):
             expires = datetime.timedelta(seconds=expires)
         else:
             expires = expires
-        max_age = "max-age={}".format(self._get_total_seconds(expires))
+        max_age = "max-age={0}".format(self._get_total_seconds(expires))
         max_age += ', public' if self.public else ''
         return max_age
 
