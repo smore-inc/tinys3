@@ -62,12 +62,11 @@ class LenWrapperStream(object):
         if hasattr(o, 'len'):
             return o.len
 
-        # If we have a fileno property
-        if hasattr(o, 'fileno'):
-            try:
-                return os.fstat(o.fileno()).st_size
-            except IOError:
-                pass  # fallback to the manual way, this is useful when using something like BytesIO
+        # If we have a fileno property (EAFP here, because some file-like objs like tarfile "ExFileObject" will pass a hasattr test but still not work)
+        try:
+            return os.fstat(o.fileno()).st_size
+        except (IOError, AttributeError):
+            pass  # fallback to the manual way, this is useful when using something like BytesIO
 
 
         # calculate based on bytes to end of content
