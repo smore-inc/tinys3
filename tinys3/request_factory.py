@@ -16,7 +16,6 @@ import requests
 
 from .util import LenWrapperStream
 
-
 # A fix for windows pc issues with mimetypes
 # http://grokbase.com/t/python/python-list/129tb1ygws/
 # mimetypes-guess-type-broken-in-windows-on-py2-7-and-python-3-x
@@ -32,9 +31,14 @@ class S3Request(object):
         self.params = params
 
     def bucket_url(self, key, bucket):
+        """Function to generate the request URL. It is used by every request."""
         protocol = 'https' if self.tls else 'http'
+        if type(key) is not str:
+            key = key.encode('utf-8')
+        if type(bucket) is not str:
+            bucket = bucket.encode('utf-8')
         url = "{0}://{1}.{2}/{3}".format(protocol, bucket, self.endpoint,
-                                     key.lstrip('/'))
+                                         key.lstrip('/'))
         # If params have been specified, add them to URL in the format :
         # url?param1&param2=value, etc.
         if self.params is not None:
@@ -79,6 +83,8 @@ class GetRequest(S3Request):
 class ListRequest(S3Request):
     def __init__(self, conn, prefix, bucket):
         super(ListRequest, self).__init__(conn)
+        if prefix and type(prefix) is not str:
+            prefix = prefix.encode('utf-8')
         self.prefix = prefix
         self.bucket = bucket
 
@@ -126,7 +132,10 @@ class ListMultipartUploadRequest(S3Request):
         params = {'uploads': None}
         super(ListMultipartUploadRequest, self).__init__(conn, params)
         self.conn = conn
-        self.prefix = prefix
+        if type(prefix) is not str:
+            self.prefix = prefix.encode('utf-8')
+        else:
+            self.prefix = prefix
         self.bucket = bucket
         self.max_uploads = max_uploads
         self.encoding = encoding
@@ -250,7 +259,7 @@ class DeleteRequest(S3Request):
 
 
 class HeadRequest(S3Request):
-    def __init__(self, conn, bucket, key='', headers=None):
+    def __init__(self, conn, bucket, key=b'', headers=None):
         super(HeadRequest, self).__init__(conn)
         self.key = key
         self.bucket = bucket

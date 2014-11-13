@@ -51,6 +51,8 @@ class Base(object):
             ValueError if no bucket was provided AND no default bucket was
             defined.
         """
+        if bucket and type(bucket) is not str:
+            bucket = bucket.encode('utf-8')
         b = bucket or self.default_bucket
         # If we don't have a bucket, raise an exception
         if not b:

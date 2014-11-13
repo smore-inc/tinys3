@@ -13,7 +13,10 @@ class MultipartUpload:
     def __init__(self, conn, bucket, key):
         self.conn = conn
         self.bucket = self.conn.bucket(bucket)
-        self.key = key
+        if type(key) is not str:
+            self.key = key.encode('utf-8')
+        else:
+            self.key = key
         self.uploadId = ''
 
     def initiate(self):
