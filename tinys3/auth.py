@@ -12,6 +12,9 @@ try:
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
+from urllib import quote
+
+from .util import stringify
 
 # A regexp used for detecting aws bucket names
 BUCKET_VHOST_MATCH = re.compile(
@@ -68,10 +71,10 @@ class S3Auth(AuthBase):
         Returns:
             Signature in bytes
         """
+        string_to_sign = stringify(string_to_sign)
         digest = hmac.new(self.secret_key.encode('utf8'),
-                          msg=string_to_sign.encode('utf8'),
+                          msg=string_to_sign,
                           digestmod=hashlib.sha1).digest()
-
         return base64.b64encode(digest).strip().decode('ascii')
 
     def string_to_sign(self, request):

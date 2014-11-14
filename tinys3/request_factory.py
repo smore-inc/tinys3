@@ -13,8 +13,9 @@ import datetime
 import mimetypes
 import os
 import requests
+from urllib import quote
 
-from .util import LenWrapperStream
+from .util import LenWrapperStream, stringify
 
 # A fix for windows pc issues with mimetypes
 # http://grokbase.com/t/python/python-list/129tb1ygws/
@@ -33,10 +34,8 @@ class S3Request(object):
     def bucket_url(self, key, bucket):
         """Function to generate the request URL. It is used by every request."""
         protocol = 'https' if self.tls else 'http'
-        if type(key) is not str:
-            key = key.encode('utf-8')
-        if type(bucket) is not str:
-            bucket = bucket.encode('utf-8')
+        key = stringify(key)
+        bucket = stringify(bucket)
         url = "{0}://{1}.{2}/{3}".format(protocol, bucket, self.endpoint,
                                          key.lstrip('/'))
         # If params have been specified, add them to URL in the format :
@@ -443,16 +442,20 @@ class CopyRequest(S3Request):
     def __init__(self, conn, from_key, from_bucket, to_key, to_bucket,
                  metadata=None, public=True):
         super(CopyRequest, self).__init__(conn)
-        self.from_key = from_key.lstrip('/')
-        self.from_bucket = from_bucket
-        self.to_key = to_key.lstrip('/')
-        self.to_bucket = to_bucket
+        # stringify + quote combo is to correctly manage Unicode filenames
+        # (they must be encoded like within an URL)
+        self.from_key = quote(stringify(from_key.lstrip('/')))
+        self.from_bucket = stringify(from_bucket)
+        # Not 'quoting' the destination key since the url encode is done later
+        self.to_key = stringify(to_key.lstrip('/'))
+        self.to_bucket = stringify(to_bucket)
         self.metadata = metadata
         self.public = public
 
     def run(self):
         headers = {
-            'x-amz-copy-source': "/%s/%s" % (self.from_bucket, self.from_key),
+            'x-amz-copy-source': "/%s/%s" % (self.from_bucket,
+                                             self.from_key)
         }
         if not self.metadata:
             headers['x-amz-metadata-directive'] = 'COPY'

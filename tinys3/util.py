@@ -1,6 +1,15 @@
 import os
 
 
+def stringify(s):
+    """In Py3k, unicode are strings, so we mustn't encode it.
+    However it is necessary in Python 2.x, since Unicode strings are
+    unicode, not str."""
+    if type(s) != str:
+        s = s.encode('utf-8')
+    return s
+
+
 class LenWrapperStream(object):
     """
     A simple class to wrap a stream and provide length capability
