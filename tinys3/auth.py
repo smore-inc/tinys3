@@ -12,7 +12,6 @@ try:
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
-from urllib import quote
 
 from .util import stringify
 
@@ -72,6 +71,9 @@ class S3Auth(AuthBase):
             Signature in bytes
         """
         string_to_sign = stringify(string_to_sign)
+        # Python 3 fix
+        if type(string_to_sign) != bytes:
+            string_to_sign = string_to_sign.encode('utf8')
         digest = hmac.new(self.secret_key.encode('utf8'),
                           msg=string_to_sign,
                           digestmod=hashlib.sha1).digest()

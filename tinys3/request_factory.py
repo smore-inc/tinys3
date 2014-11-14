@@ -13,7 +13,11 @@ import datetime
 import mimetypes
 import os
 import requests
-from urllib import quote
+# Python 2/3 compatibility
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
 
 from .util import LenWrapperStream, stringify
 
