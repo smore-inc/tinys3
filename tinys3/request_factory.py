@@ -262,7 +262,7 @@ class DeleteRequest(S3Request):
 
 
 class HeadRequest(S3Request):
-    def __init__(self, conn, bucket, key=b'', headers=None):
+    def __init__(self, conn, bucket, key='', headers=None):
         super(HeadRequest, self).__init__(conn)
         self.key = key
         self.bucket = bucket
