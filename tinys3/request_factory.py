@@ -140,7 +140,7 @@ class UploadRequest(S3Request):
         headers = {}
 
         # calc the expires headers
-        if self.expires:
+        if self.expires is not None:
             headers['Cache-Control'] = self._calc_cache_control()
 
         # calc the content type
