@@ -72,9 +72,9 @@ class LenWrapperStream(object):
             return o.len
 
         # If we have a fileno property
-		# (EAFP here, because some file-like objs like
-		# tarfile "ExFileObject" will pass a hasattr test
-		# but still not work)
+        # (EAFP here, because some file-like objs like
+        # tarfile "ExFileObject" will pass a hasattr test
+        # but still not work)
         try:
             return os.fstat(o.fileno()).st_size
         except (IOError, AttributeError):
