@@ -28,6 +28,7 @@ mimetypes.init([])
 
 XML_PARSE_STRING = "{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}"
 
+
 class S3Request(object):
     def __init__(self, conn, params=None):
         self.auth = conn.auth
@@ -36,7 +37,7 @@ class S3Request(object):
         self.params = params
 
     def bucket_url(self, key, bucket):
-        """Function to generate the request URL. It is used by every request."""
+        """Function to generate the request URL. Is used by every request"""
         protocol = 'https' if self.tls else 'http'
         key = stringify(key)
         bucket = stringify(bucket)
@@ -46,7 +47,10 @@ class S3Request(object):
         # url?param1&param2=value, etc.
         if self.params is not None:
             first = True
-            for (param, value) in self.params.items():
+            # Sort params so they are processed alphabetically
+            # to ensure that the generated URL is always the same, to avoid
+            # sometimes making tests checking the input URL fail.
+            for (param, value) in sorted(self.params.items()):
                 if first is True:
                     url += "?"
                     first = False
@@ -142,6 +146,7 @@ class ListMultipartUploadRequest(S3Request):
         self.bucket = bucket
         self.max_uploads = max_uploads
         self.encoding = encoding
+
         self.key_marker = key_marker
         self.upload_id_marker = upload_id_marker
 
@@ -166,7 +171,7 @@ class ListMultipartUploadRequest(S3Request):
                 'key-marker': self.key_marker,
                 'prefix': self.prefix,
                 'upload-id-marker': self.upload_id_marker
-            })            
+            })
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
             for tag in root.findall(k('Upload')):
@@ -215,10 +220,10 @@ class ListPartsRequest(S3Request):
             root = ET.fromstring(resp.content)
             for tag in root.findall(k('Part')):
                 part = {
-                    'part_number': tag.find(k('PartNumber')).text,
+                    'part_number': int(tag.find(k('PartNumber')).text),
                     'last_modified': tag.find(k('LastModified')).text,
                     'etag': tag.find(k('ETag')).text,
-                    'size': tag.find(k('Size')).text
+                    'size': int(tag.find(k('Size')).text)
                 }
                 yield part
 
@@ -403,24 +408,26 @@ class UploadPartRequest(S3Request):
 
 class CompleteUploadRequest(S3Request):
 
-    def __init__(self, mp_upload):
-        params = {'uploadId': mp_upload.uploadId}
-        super(CompleteUploadRequest, self).__init__(mp_upload.conn, params)
-        self.mp_upload = mp_upload
+    def __init__(self, conn, key, bucket, uploadId, parts_list):
+        params = {'uploadId': uploadId}
+        super(CompleteUploadRequest, self).__init__(conn, params)
+        self.key = key
+        self.bucket = bucket
+        self.parts_list = parts_list
 
     def run(self):
         # We need to pass some HTML in the POST request data body.
         # It includes all the ETags headers sent by the server responses when
         # parts were uploaded, in order
         data = "<CompleteMultipartUpload>"
-        for part in self.mp_upload.list_parts():
+        for part in self.parts_list:
             data += "<Part>"
             data += "<PartNumber>{}</PartNumber>".format(part['part_number'])
             data += "<ETag>{}</ETag>".format(part['etag'])
             data += "</Part>"
         data += "</CompleteMultipartUpload>"
         # POST /ObjectName?uploadId=UploadId
-        url = self.bucket_url(self.mp_upload.key, self.mp_upload.bucket)
+        url = self.bucket_url(self.key, self.bucket)
         r = self.adapter().post(url, auth=self.auth, data=data)
         r.raise_for_status()
         return r
@@ -428,14 +435,15 @@ class CompleteUploadRequest(S3Request):
 
 class CancelUploadRequest(S3Request):
 
-    def __init__(self, mp_upload):
-        params = {'uploadId': mp_upload.uploadId}
-        super(CancelUploadRequest, self).__init__(mp_upload.conn, params)
-        self.mp_upload = mp_upload
+    def __init__(self, conn, key, bucket, uploadId):
+        params = {'uploadId': uploadId}
+        super(CancelUploadRequest, self).__init__(conn, params)
+        self.key = key
+        self.bucket = bucket
 
     def run(self):
         # DELETE /ObjectName?uploadId=UploadId
-        url = self.bucket_url(self.mp_upload.key, self.mp_upload.bucket)
+        url = self.bucket_url(self.key, self.bucket)
         r = self.adapter().delete(url, auth=self.auth)
         r.raise_for_status()
         return r

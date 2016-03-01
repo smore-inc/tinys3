@@ -62,14 +62,25 @@ class MultipartUpload:
         See http://docs.aws.amazon.com/AmazonS3/latest/API/
         mpUploadComplete.html"""
         from .request_factory import CompleteUploadRequest
-        req = CompleteUploadRequest(self)
+        req = CompleteUploadRequest(
+            self.conn,
+            self.key,
+            self.bucket,
+            self.uploadId,
+            list(self.list_parts())  # Convert the generator to list
+        )
         resp = self.conn.run(req)
         return resp
 
     def cancel_upload(self):
         """Call this method to abort the multipart upload"""
         from .request_factory import CancelUploadRequest
-        req = CancelUploadRequest(self)
+        req = CancelUploadRequest(
+            self.conn,
+            self.key,
+            self.bucket,
+            self.uploadId
+        )
         return self.conn.run(req)
 
     def list_parts(self, encoding=None, max_parts=1000, part_number_marker=''):
