@@ -44,14 +44,14 @@ class TestMultipartUpload(unittest.TestCase):
         response_content = """<?xml version="1.0" encoding="UTF-8"?>
         <InitiateMultipartUploadResult
         xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-          <Bucket>{}</Bucket>
-          <Key>{}</Key>
-          <UploadId>{}</UploadId>
+          <Bucket>{0}</Bucket>
+          <Key>{1}</Key>
+          <UploadId>{2}</UploadId>
         </InitiateMultipartUploadResult>
         """.format(self.test_bucket, self.test_key, self.uploadId)
 
         mock.should_receive('post').with_args(
-            'https://{}.s3.amazonaws.com/{}?uploads'.format(
+            'https://{0}.s3.amazonaws.com/{1}?uploads'.format(
                 self.test_bucket, self.test_key),
             auth=self.conn.auth
         ).and_return(flexmock(
@@ -80,7 +80,8 @@ class TestMultipartUpload(unittest.TestCase):
         # In python3 uploadId and partNumber are reversed in order...
         # But both URLs are valid
         mock.should_receive("put").with_args(
-            'https://{}.s3.amazonaws.com/{}?partNumber={}&uploadId={}'.format(
+            'https://{0}.s3.amazonaws.com/{1}?partNumber={2}&uploadId={3}'
+            .format(
                 self.test_bucket, self.test_key, part_nbr, self.uploadId),
             headers=None,
             data=s,
@@ -103,8 +104,8 @@ class TestMultipartUpload(unittest.TestCase):
         data = "<CompleteMultipartUpload>"
         for part in parts_list:
             data += "<Part>"
-            data += "<PartNumber>{}</PartNumber>".format(part['part_number'])
-            data += "<ETag>{}</ETag>".format(part['etag'])
+            data += "<PartNumber>{0}</PartNumber>".format(part['part_number'])
+            data += "<ETag>{1}</ETag>".format(part['etag'])
             data += "</Part>"
         data += "</CompleteMultipartUpload>"
         req = CompleteUploadRequest(
@@ -116,7 +117,7 @@ class TestMultipartUpload(unittest.TestCase):
         )
         mock = self._mock_adapter(req)
         mock.should_receive('post').with_args(
-            'https://{}.s3.amazonaws.com/{}?uploadId={}'.format(
+            'https://{0}.s3.amazonaws.com/{1}?uploadId={2}'.format(
                 self.test_bucket, self.test_key, self.uploadId),
             auth=self.conn.auth,
             data=data
@@ -134,7 +135,7 @@ class TestMultipartUpload(unittest.TestCase):
         )
         mock = self._mock_adapter(req)
         mock.should_receive('delete').with_args(
-            'https://{}.s3.amazonaws.com/{}?uploadId={}'.format(
+            'https://{0}.s3.amazonaws.com/{1}?uploadId={2}'.format(
                 self.test_bucket, self.test_key, self.uploadId),
             auth=self.conn.auth
         ).and_return(flexmock(raise_for_status=lambda: None)).once()
@@ -148,7 +149,7 @@ class TestMultipartUpload(unittest.TestCase):
         response_content = """<?xml version="1.0" encoding="UTF-8"?>
         <ListMultipartUploadsResult
         xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-            <Bucket>{}</Bucket>
+            <Bucket>{0}</Bucket>
             <KeyMarker></KeyMarker>
             <UploadIdMarker></UploadIdMarker>
             <NextKeyMarker>my-movie.m2ts</NextKeyMarker>
@@ -157,8 +158,8 @@ class TestMultipartUpload(unittest.TestCase):
             <MaxUploads>1000</MaxUploads>
             <IsTruncated>false</IsTruncated>
             <Upload>
-                <Key>{}</Key>
-                <UploadId>{}</UploadId>
+                <Key>{1}</Key>
+                <UploadId>{2}</UploadId>
                 <Initiator>
                     <ID>arn:aws:iam::111122223333:user/user1-11111a31-17b5-4fb7-9df5-b111111f13de</ID>
                     <DisplayName>user1-11111a31-17b5-4fb7-9df5-b111111f13de</DisplayName>
@@ -189,7 +190,7 @@ class TestMultipartUpload(unittest.TestCase):
         )
         mock = self._mock_adapter(req)
         mock.should_receive('get').with_args(
-            'https://{}.s3.amazonaws.com/?uploads'.format(
+            'https://{0}.s3.amazonaws.com/?uploads'.format(
                 self.test_bucket, self.test_key),
             auth=self.conn.auth,
             params=my_params
@@ -209,9 +210,9 @@ class TestMultipartUpload(unittest.TestCase):
         # http://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadListParts.html
         response_content = """<?xml version="1.0" encoding="UTF-8"?>
         <ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-            <Bucket>{}</Bucket>
-            <Key>{}</Key>
-            <UploadId>{}</UploadId>
+            <Bucket>{0}</Bucket>
+            <Key>{1}</Key>
+            <UploadId>{2}</UploadId>
             <Initiator>
                     <ID>arn:aws:iam::111122223333:user/some-user-11116a31-17b5-4fb7-9df5-b288870f11xx</ID>
                     <DisplayName>umat-user-11116a31-17b5-4fb7-9df5-b288870f11xx</DisplayName>
@@ -254,7 +255,7 @@ class TestMultipartUpload(unittest.TestCase):
 
         mock = self._mock_adapter(req)
         mock.should_receive('get').with_args(
-            'https://{}.s3.amazonaws.com/{}?uploadId={}'.format(
+            'https://{0}.s3.amazonaws.com/{1}?uploadId={2}'.format(
                 self.test_bucket, self.test_key, self.uploadId),
             auth=self.conn.auth,
             params=my_params
