@@ -59,7 +59,7 @@ class S3Request(object):
                 url += param
                 # Some parameters (e.g. subresource descriptors) have no value
                 if value is not None:
-                    url += "={}".format(value)
+                    url += "={0}".format(value)
         return url
 
     def run(self):
@@ -422,8 +422,8 @@ class CompleteUploadRequest(S3Request):
         data = "<CompleteMultipartUpload>"
         for part in self.parts_list:
             data += "<Part>"
-            data += "<PartNumber>{}</PartNumber>".format(part['part_number'])
-            data += "<ETag>{}</ETag>".format(part['etag'])
+            data += "<PartNumber>{0}</PartNumber>".format(part['part_number'])
+            data += "<ETag>{0}</ETag>".format(part['etag'])
             data += "</Part>"
         data += "</CompleteMultipartUpload>"
         # POST /ObjectName?uploadId=UploadId

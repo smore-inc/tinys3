@@ -105,7 +105,7 @@ class TestMultipartUpload(unittest.TestCase):
         for part in parts_list:
             data += "<Part>"
             data += "<PartNumber>{0}</PartNumber>".format(part['part_number'])
-            data += "<ETag>{1}</ETag>".format(part['etag'])
+            data += "<ETag>{0}</ETag>".format(part['etag'])
             data += "</Part>"
         data += "</CompleteMultipartUpload>"
         req = CompleteUploadRequest(
