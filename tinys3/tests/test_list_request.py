@@ -47,7 +47,8 @@ class TestNonUploadRequests(unittest.TestCase):
 
     def setup_adapter(self, marker, files, truncated):
         self.adapter.should_receive('get').with_args(
-            'https://s3.amazonaws.com/bucket/',
+            'https://bucket.s3.amazonaws.com/',
+            # 'https://s3.amazonaws.com/bucket/',
             auth=self.conn.auth,
             params={'prefix': 'prefix', 'marker': marker},
         ).and_return(flexmock(

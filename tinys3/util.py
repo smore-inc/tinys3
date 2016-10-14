@@ -1,6 +1,15 @@
 import os
 
 
+def stringify(s):
+    """In Py3k, unicode are strings, so we mustn't encode it.
+    However it is necessary in Python 2.x, since Unicode strings are
+    unicode, not str."""
+    if type(s) != str and type(s) != bytes:
+        s = s.encode('utf-8')
+    return s
+
+
 class LenWrapperStream(object):
     """
     A simple class to wrap a stream and provide length capability
@@ -9,9 +18,9 @@ class LenWrapperStream(object):
      We do it because requests will try to fallback to chuncked transfer if
      it can't extract the len attribute of the object it gets, and S3 doesn't
      support chuncked transfer.
-     In some cases, like cStringIO, it may cause some issues, so we wrap the stream
-     with a class of our own, that will proxy the stream and provide a proper
-     len attribute
+     In some cases, like cStringIO, it may cause some issues, so we wrap the
+     stream with a class of our own, that will proxy the stream and provide a
+     proper len attribute
     """
 
     def __init__(self, stream):
@@ -62,11 +71,16 @@ class LenWrapperStream(object):
         if hasattr(o, 'len'):
             return o.len
 
-        # If we have a fileno property (EAFP here, because some file-like objs like tarfile "ExFileObject" will pass a hasattr test but still not work)
+        # If we have a fileno property
+        # (EAFP here, because some file-like objs like
+        # tarfile "ExFileObject" will pass a hasattr test
+        # but still not work)
         try:
             return os.fstat(o.fileno()).st_size
         except (IOError, AttributeError):
-            pass  # fallback to the manual way, this is useful when using something like BytesIO
+            # fallback to the manual way,
+            # this is useful when using something like BytesIO
+            pass
 
 
         # calculate based on bytes to end of content
@@ -83,7 +97,8 @@ class LenWrapperStream(object):
 
     def __eq__(self, other):
         """
-        Make sure equal method works as expected (comparing the underlying stream and not the wrapper)
+        Make sure equal method works as expected (comparing the underlying
+        stream and not the wrapper)
         """
         if self.stream == other:
             return True

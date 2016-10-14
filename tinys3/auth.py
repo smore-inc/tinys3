@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import requests
-
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
 from datetime import datetime
@@ -15,29 +13,39 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
+from .util import stringify
+
 # A regexp used for detecting aws bucket names
-BUCKET_VHOST_MATCH = re.compile(r'^([a-z0-9\-]+\.)?s3([a-z0-9\-]+)?\.amazonaws\.com$', flags=re.IGNORECASE)
+BUCKET_VHOST_MATCH = re.compile(
+    r'^([a-z0-9\-]+\.)?s3([a-z0-9\-]+)?\.amazonaws\.com$',
+    flags=re.IGNORECASE)
 
 # A list of query params used by aws
-AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle', 'versionid',
-                    'response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
-                    'response-content-disposition', 'response-content-encoding', 'delete']
+AWS_QUERY_PARAMS = ['versioning', 'location', 'acl', 'torrent', 'lifecycle',
+                    'versionid', 'response-content-type',
+                    'response-content-language', 'response-expires',
+                    'response-cache-control', 'response-content-disposition',
+                    'response-content-encoding', 'delete',
+                    'uploads', 'partnumber', 'uploadid']
 
 
 class S3Auth(AuthBase):
     """
     S3 Custom Authenticator class for requests
 
-    This authenticator will sign your requests based on the RESTAuthentication specs by Amazon
+    This authenticator will sign your requests based on the RESTAuthentication
+    specs by Amazon
     http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
 
     You can read more about custom authenticators here:
-    http://docs.python-requests.org/en/latest/user/advanced.html#custom-authentication
+    http://docs.python-requests.org/en/latest/user/
+    advanced.html#custom-authentication
 
     Usage:
 
     >>> from tinys3.auth import S3Auth
-    >>> requests.put('<S3Url>', data='<S3Data'>, auth=S3Auth('<access_key>','<secret_key>'))
+    >>> requests.put('<S3Url>', data='<S3Data'>, auth=S3Auth('<access_key>',
+                                                             '<secret_key>'))
     """
 
     def __init__(self, access_key, secret_key):
@@ -62,10 +70,13 @@ class S3Auth(AuthBase):
         Returns:
             Signature in bytes
         """
+        string_to_sign = stringify(string_to_sign)
+        # Python 3 fix
+        if type(string_to_sign) != bytes:
+            string_to_sign = string_to_sign.encode('utf8')
         digest = hmac.new(self.secret_key.encode('utf8'),
-                          msg=string_to_sign.encode('utf8'),
+                          msg=string_to_sign,
                           digestmod=hashlib.sha1).digest()
-
         return base64.b64encode(digest).strip().decode('ascii')
 
     def string_to_sign(self, request):
@@ -85,7 +96,8 @@ class S3Auth(AuthBase):
         # Add the hearders
         h.update(request.headers)
 
-        # If we have an 'x-amz-date' header, we'll try to use it instead of the date
+        # If we have an 'x-amz-date' header,
+        # we'll try to use it instead of the date
         if b'x-amz-date' in h or 'x-amz-date' in h:
             date = ''
         else:
@@ -96,9 +108,10 @@ class S3Auth(AuthBase):
         request.headers['Date'] = date
 
         # A fix for the content type header extraction in python 3
-        # This have to be done because requests will try to set application/www-url-encoded herader
-        # if we pass bytes as the content, and the content-type is set with a key that is b'Content-Type' and not
-        # 'Content-Type'
+        # This have to be done because requests will try to set
+        # application/www-url-encoded header if we pass bytes as the content,
+        # and the content-type is set with a key that is b'Content-Type' and
+        # not 'Content-Type'
         content_type = ''
         if b'Content-Type' in request.headers:
             # Fix content type
@@ -108,7 +121,8 @@ class S3Auth(AuthBase):
 
         # The string we're about to generate
         # There's more information about it here:
-        # http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html#ConstructingTheAuthenticationHeader
+        # http://docs.aws.amazon.com/AmazonS3/latest/dev/
+        # RESTAuthentication.html#ConstructingTheAuthenticationHeader
         msg = [
             # HTTP Method
             request.method,
@@ -119,7 +133,8 @@ class S3Auth(AuthBase):
             # Date
             date,
             # Canonicalized special amazon headers and resource uri
-            self._get_canonicalized_amz_headers(h) + self._get_canonicalized_resource(request)
+            self._get_canonicalized_amz_headers(h) +
+            self._get_canonicalized_resource(request)
         ]
 
         # join with a newline and return
@@ -136,7 +151,9 @@ class S3Auth(AuthBase):
             - String with the canonicalized headers
 
         More information about this process here:
-        http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html#RESTAuthenticationConstructingCanonicalizedAmzHeaders
+        http://docs.aws.amazon.com/AmazonS3/latest/dev/
+        RESTAuthentication.html#
+        RESTAuthenticationConstructingCanonicalizedAmzHeaders
         """
 
         # New dict for the amazon headers
@@ -159,7 +176,8 @@ class S3Auth(AuthBase):
         # Sort the keys and iterate through them
         for k in sorted(amz_dict.keys()):
             # add stripped key and value to the result string
-            result += "%s:%s\n" % (k.strip(), amz_dict[k].strip().replace('\n', ' '))
+            result += "{0}:{1}\n".format(k.strip(),
+                                         amz_dict[k].strip().replace('\n', ' '))
 
         # Return the result string
         return result
@@ -169,7 +187,8 @@ class S3Auth(AuthBase):
         Generates the canonicalized resource string form a request
 
         You can read more about the process here:
-        http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html#ConstructingTheCanonicalizedResourceElement
+        http://docs.aws.amazon.com/AmazonS3/latest/dev/
+        RESTAuthentication.html#ConstructingTheCanonicalizedResourceElement
 
         Params:
             - request   The request object
@@ -187,20 +206,18 @@ class S3Auth(AuthBase):
         host = parts.netloc.split(':')[0]
 
         if host:
-            # try to match our host to <hostname>.s3.amazonaws.com/s3.amazonaws.com
+            # try to match our host to
+            # <hostname>.s3.amazonaws.com/s3.amazonaws.com
             m = BUCKET_VHOST_MATCH.match(host)
             if m:
                 bucket = (m.groups()[0] or '').rstrip('.')
-
                 if bucket:
                     r += ('/' + bucket)
             else:
                 # It's a virtual host, add it to the result
                 r += ('/' + host)
-
         # Add the path string
         r += parts.path or '/'
-
         # add the special query strings
         r += self._get_subresource(parts.query)
 
@@ -211,27 +228,26 @@ class S3Auth(AuthBase):
         Handle subresources in the query string
 
         More information about subresources:
-        http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html#ConstructingTheCanonicalizedResourceElement
+        http://docs.aws.amazon.com/AmazonS3/latest/dev/
+        RESTAuthentication.html#ConstructingTheCanonicalizedResourceElement
         """
         r = []
 
-        # Split the querystring
-        keys = qs.split('&')
+        # Split the query string
+        # and order the keys lexicographically
+        keys = sorted(qs.split('&'))
         # for each item
         for i in keys:
             # get the key
             item = i.split('=')
             k = item[0].lower()
-
             # If it's one the special params
             if k in AWS_QUERY_PARAMS:
                 # add it to our result list
                 r.append(i)
-
         # If we have result, convert them to query string
         if r:
             return '?' + '&'.join(r)
-
         return ''
 
     def _get_date(self):
@@ -242,22 +258,23 @@ class S3Auth(AuthBase):
 
     def _fix_content_length(self, request):
         """
-        Amazon requires to have content-length header when using the put request,
-        However, requests won't add this header, so we need to add it ourselves.
+        Amazon requires to have content-length header when using the put
+        request, however, requests won't add this header, so we need to add it
+        ourselves.
 
         Params:
             - request   The request object
         """
 
-        if request.method == 'PUT' and not 'Content-Length' in request.headers:
+        if request.method == 'PUT' and 'Content-Length' not in request.headers:
             request.headers['Content-Length'] = '0'
 
     def __call__(self, r):
         """
         The entry point of the custom authenticator.
 
-        When used as an auth class, requests will call this method just before sending
-        the request.
+        When used as an auth class, requests will call this method just before
+        sending the request.
 
         Params:
             - r     The request object
@@ -269,7 +286,8 @@ class S3Auth(AuthBase):
         # Generate the string to sign
         msg = self.string_to_sign(r)
         # Sign the string and add the authorization header
-        r.headers['Authorization'] = "AWS %s:%s" % (self.access_key, self.sign(msg))
+        r.headers['Authorization'] = "AWS {0}:{1}".format(
+            self.access_key, self.sign(msg))
 
         # Fix an issue with 0 length requests
         self._fix_content_length(r)

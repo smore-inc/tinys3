@@ -21,7 +21,7 @@ class TestNonUploadRequests(unittest.TestCase):
 
         # Simple with tls
         url = r.bucket_url('test_key', 'test_bucket')
-        self.assertEqual(url, 'https://s3.amazonaws.com/test_bucket/test_key', 'Simple url with SSL')
+        self.assertEqual(url, 'https://test_bucket.s3.amazonaws.com/test_key', 'Simple url with SSL')
 
         # change connection to non-http
         self.conn.tls = False
@@ -30,15 +30,15 @@ class TestNonUploadRequests(unittest.TestCase):
 
         # Test the simplest url
         url = r.bucket_url('test_key', 'test_bucket')
-        self.assertEqual(url, 'http://s3.amazonaws.com/test_bucket/test_key', 'Simple url')
+        self.assertEqual(url, 'http://test_bucket.s3.amazonaws.com/test_key', 'Simple url')
 
         # Key with / prefix
         url = r.bucket_url('/test_key', 'test_bucket')
-        self.assertEqual(url, 'http://s3.amazonaws.com/test_bucket/test_key', 'Key with / prefix')
+        self.assertEqual(url, 'http://test_bucket.s3.amazonaws.com/test_key', 'Key with / prefix')
 
         # Nested key
         url = r.bucket_url('folder/for/key/test_key', 'test_bucket')
-        self.assertEqual(url, 'http://s3.amazonaws.com/test_bucket/folder/for/key/test_key', 'Nested key')
+        self.assertEqual(url, 'http://test_bucket.s3.amazonaws.com/folder/for/key/test_key', 'Nested key')
 
     def _mock_adapter(self, request):
         """
@@ -58,8 +58,10 @@ class TestNonUploadRequests(unittest.TestCase):
 
         mock = self._mock_adapter(r)
 
-        mock.should_receive('delete').with_args('https://s3.amazonaws.com/bucket/key_to_delete',
-                                                auth=self.conn.auth).and_return(self._mock_response()).once()
+        mock.should_receive('delete').with_args(
+            'https://bucket.s3.amazonaws.com/key_to_delete',
+            # 'https://s3.amazonaws.com/bucket/key_to_delete',
+            auth=self.conn.auth).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -72,8 +74,10 @@ class TestNonUploadRequests(unittest.TestCase):
 
         mock = self._mock_adapter(r)
 
-        mock.should_receive('get').with_args('https://s3.amazonaws.com/bucket/key_to_get',
-                                             auth=self.conn.auth).and_return(self._mock_response()).once()
+        mock.should_receive('get').with_args(
+            # 'https://s3.amazonaws.com/bucket/key_to_get',
+            'https://bucket.s3.amazonaws.com/key_to_get',
+            auth=self.conn.auth, headers=None).and_return(self._mock_response()).once()
 
         r.run()
 
@@ -95,7 +99,8 @@ class TestNonUploadRequests(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/bucket/key_to_update',
+            'https://bucket.s3.amazonaws.com/key_to_update',
+            # 'https://s3.amazonaws.com/bucket/key_to_update',
             headers=expected_headers,
             auth=self.conn.auth
         ).and_return(self._mock_response()).once()
@@ -117,7 +122,8 @@ class TestNonUploadRequests(unittest.TestCase):
         }
 
         mock.should_receive('put').with_args(
-            'https://s3.amazonaws.com/to_bucket/to_key',
+            'https://to_bucket.s3.amazonaws.com/to_key',
+            # 'https://s3.amazonaws.com/to_bucket/to_key',
             headers=expected_headers,
             auth=self.conn.auth
         ).and_return(self._mock_response()).once()
